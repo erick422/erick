@@ -1,0 +1,1254 @@
+
+ Logo
+HOME
+PHP
+MYSQL
+JQUERY
+C SHARP
+CSS
+PYTHON
+OCIO
+RECURSOS
+TUTORIALES
+
+Buscar
+CREAR UN REPORTE EN EXCEL CON PHP Y MYSQL
+13 / SEP / 2013
+CATEGORIAS: MYSQL / PHP
+
+ 
+En este post les trigo un ejemplo para crear un reporte en Excel con PHP y una base de datos MySQL, la librería que se va a utilizar es PHPExcel.
+
+PHPEXCEL
+PHPExcel es una librería escrita en PHP  integrada por un conjunto de clases que permiten escribir y leer diferentes formatos de archivos de hojas de cálculo  como .xls, . xlsx, .csv,  .ods, PDF, HTML, … Este proyecto se basa en el estándar OpenXML Microsoft y PHP.
+
+Pagina Oficial y descarga
+
+¿EN QUÉ CONSISTE EL EJEMPLO?
+El ejemplo va a consistir en extraer de la base de datos una lista de alumnos ordenados por carrera, los cuales serán presentados en una hoja de cálculo de Excel y se les aplicará formato a las celdas(Fuente, tamaño, alineación, bordes, relleno, etc). Bueno ahora que sabemos que es lo que vamos a hacer podemos comenzar.
+
+BASE DE DATOS
+CREATE TABLE IF NOT EXISTS `repexcel`.`alumno` (
+ `numcontrol` INT UNSIGNED NOT NULL AUTO_INCREMENT ,
+ `paterno` VARCHAR(15) NOT NULL ,
+ `materno` VARCHAR(55) NOT NULL ,
+ `nombre` VARCHAR(15) NOT NULL ,
+ `sexo` ENUM('F','M') NOT NULL ,
+ `fechanac` DATE NOT NULL ,
+ `idcarrera` INT UNSIGNED NOT NULL ,
+ PRIMARY KEY (`numcontrol`) ,
+ INDEX `fk_alumno_carrera_idx` (`idcarrera` ASC) ,
+ CONSTRAINT `fk_alumno_carrera`
+ FOREIGN KEY (`idcarrera` )
+ REFERENCES `repexcel`.`carrera` (`idcarrera` )
+ ON DELETE NO ACTION
+ ON UPDATE NO ACTION)
+ENGINE = InnoDB
+ 
+CREATE TABLE IF NOT EXISTS `repexcel`.`carrera` (
+ `idcarrera` INT UNSIGNED NOT NULL AUTO_INCREMENT ,
+ `carrera` VARCHAR(50) NOT NULL ,
+ PRIMARY KEY (`idcarrera`) )
+ENGINE = InnoDB
+ 
+&nbsp;
+ARCHIVO HTML
+Con lo que voy a comenzar es creando un archivo HTML en el cual solo voy a colocar un título y un hipervínculo para descargar el reporte.
+
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="utf-8" />
+      <title>Reporte de excel con PHP y MySQL</title>
+   </head>
+   <body>
+      <div>
+        <header>
+           <h1>REPORTE DE EXCEL CON PHP Y MYSQL</h1>
+        </header>
+        <div>
+           <a href="reporteexcel.php"> Haz clic para descargar el reporte</a>
+        </div>
+      </div>
+   </body>
+</html>
+ARCHIVO PHP
+Ahora toca el turno de crear el archivo PHP que se va a encargar de generar el reporte, voy a ir explicando el contenido de este archivo poco a poco.
+
+Lo primero es crear la conexión a la base de datos y verificar si se pudo conectar al servidor de lo contrario el programa terminaría hasta aquí y mandaría el error.
+
+$conexion = new mysqli('localhost','usuario','password','basedatos',3306);
+if (mysqli_connect_errno()) {
+   printf("La conexión con el servidor de base de datos falló: %s\n", mysqli_connect_error());
+   exit();
+}
+Una vez que se realizó la conexión al servidor de base de datos procedemos a ejecutar la consulta de selección para obtener los datos del reporte.
+
+$consulta = "SELECT concat(paterno,' ', materno, ' ' , nombre) AS alumno, fechanac, sexo, carrera FROM alumno ";
+$consulta .= " INNER JOIN carrera ON alumno.idcarrera = carrera.idcarrera ORDER BY carrera, nombre";
+ 
+$resultado = $conexion->query($consulta);
+Lo siguiente es verificar que la consulta obtuvo los registros a mostrar y lo hacemos con la siguiente condición, si el número de registros es mayor que 0 quiere decir que si se obtuvieron datos por lo tanto procedemos a crear el reporte.
+
+if($resultado->num_rows > 0 ){
+Lo primero que hacemos es definir la zona horaria, debido a que vamos a trabajar con datos de tipo fecha y luego manda un error si no tenemos asignada una zona horaria, en este caso voy a asignar la de la ciudad de México, puedes consultar los datos de la zona horaria desde aquí: Listado de zonas horarias.
+
+date_default_timezone_set('America/Mexico_City');
+La siguiente línea determina si se está accediendo al archivo vía HTTP o CLI(command line interface), el archivo solo se va a mostrar si se accede desde un navegador web(HTTP).
+
+if (PHP_SAPI == 'cli')
+    die('Este archivo solo se puede ver desde un navegador web');
+Ahora si comenzamos a armar el reporte de Excel
+
+/** Se agrega la libreria PHPExcel */
+ require_once 'lib/PHPExcel/PHPExcel.php';
+ 
+// Se crea el objeto PHPExcel
+ $objPHPExcel = new PHPExcel();
+Comenzamos agregando las propiedades del archivo de Excel, estas las podemos ver una vez que se haya guardado el archivo haciendo “Clic derecho > Propiedades > Detalles”
+
+// Se asignan las propiedades del libro
+$objPHPExcel->getProperties()->setCreator("Codedrinks") // Nombre del autor
+    ->setLastModifiedBy("Codedrinks") //Ultimo usuario que lo modificó
+    ->setTitle("Reporte Excel con PHP y MySQL") // Titulo
+    ->setSubject("Reporte Excel con PHP y MySQL") //Asunto
+    ->setDescription("Reporte de alumnos") //Descripción
+    ->setKeywords("reporte alumnos carreras") //Etiquetas
+    ->setCategory("Reporte excel"); //Categorias
+Para los títulos del reporte voy a crear dos variables, de esta forma es un poco más fácil realizar algunos cambios si es que el reporte fuera muy extenso.
+
+$tituloReporte = "Relación de alumnos por carrera";
+$titulosColumnas = array('NOMBRE', 'FECHA DE NACIMIENTO', 'SEXO', 'CARRERA');
+El reporte como ya se habrán dado cuenta va a tener solo 4 columnas: Nombre, Fecha de nacimiento, sexo y carrera. Por lo tanto solo vamos a ocupar hasta la columna D.
+
+// Se combinan las celdas A1 hasta D1, para colocar ahí el titulo del reporte
+$objPHPExcel->setActiveSheetIndex(0)
+    ->mergeCells('A1:D1');
+ 
+// Se agregan los titulos del reporte
+$objPHPExcel->setActiveSheetIndex(0)
+    ->setCellValue('A1',$tituloReporte) // Titulo del reporte
+    ->setCellValue('A3',  $titulosColumnas[0])  //Titulo de las columnas
+    ->setCellValue('B3',  $titulosColumnas[1])
+    ->setCellValue('C3',  $titulosColumnas[2])
+    ->setCellValue('D3',  $titulosColumnas[3]);
+Como pueden apreciar para asignar contenido a una celda se selecciona primero la hoja con setActiveSheetIndex(Indice de hoja) y después con setCellValue(celda, valor) asignamos el contenido a la celda deseada.
+
+Ahora procedemos a rellenar las columnas con la información de los alumnos, para ello vamos a recorrer el resultado utilizando un while, las celdas se van a rellenar de forma parecida al paso anterior solo que aquí para indicar el número de fila se va a utilizar una variable que se va a estar incrementando cada vez que se rellene la información de un alumno.
+
+//Se agregan los datos de los alumnos
+ 
+ $i = 4; //Numero de fila donde se va a comenzar a rellenar
+ while ($fila = $resultado->fetch_array()) {
+     $objPHPExcel->setActiveSheetIndex(0)
+         ->setCellValue('A'.$i, $fila['alumno'])
+         ->setCellValue('B'.$i, $fila['fechanac'])
+         ->setCellValue('C'.$i, $fila['sexo'])
+         ->setCellValue('D'.$i, $fila['carrera']);
+     $i++;
+ }
+Hasta este punto ya se tiene el archivo con los datos ahora procedemos a aplicar el formato a las celdas. Para ello vamos a crear 3 variables, la primera va a contener el estilo del título del reporte, la segunda el estilo del título de las columnas y la tercera el estilo de la información de los alumnos.
+
+$estiloTituloReporte = array(
+    'font' => array(
+        'name'      => 'Verdana',
+        'bold'      => true,
+        'italic'    => false,
+        'strike'    => false,
+        'size' =>16,
+        'color'     => array(
+            'rgb' => 'FFFFFF'
+        )
+    ),
+    'fill' => array(
+      'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+      'color' => array(
+            'argb' => 'FF220835')
+  ),
+    'borders' => array(
+        'allborders' => array(
+            'style' => PHPExcel_Style_Border::BORDER_NONE
+        )
+    ),
+    'alignment' => array(
+        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+        'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+        'rotation' => 0,
+        'wrap' => TRUE
+    )
+);
+ 
+$estiloTituloColumnas = array(
+    'font' => array(
+        'name'  => 'Arial',
+        'bold'  => true,
+        'color' => array(
+            'rgb' => 'FFFFFF'
+        )
+    ),
+    'fill' => array(
+        'type'       => PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
+  'rotation'   => 90,
+        'startcolor' => array(
+            'rgb' => 'c47cf2'
+        ),
+        'endcolor' => array(
+            'argb' => 'FF431a5d'
+        )
+    ),
+    'borders' => array(
+        'top' => array(
+            'style' => PHPExcel_Style_Border::BORDER_MEDIUM ,
+            'color' => array(
+                'rgb' => '143860'
+            )
+        ),
+        'bottom' => array(
+            'style' => PHPExcel_Style_Border::BORDER_MEDIUM ,
+            'color' => array(
+                'rgb' => '143860'
+            )
+        )
+    ),
+    'alignment' =>  array(
+        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+        'wrap'      => TRUE
+    )
+);
+ 
+$estiloInformacion = new PHPExcel_Style();
+$estiloInformacion->applyFromArray( array(
+    'font' => array(
+        'name'  => 'Arial',
+        'color' => array(
+            'rgb' => '000000'
+        )
+    ),
+    'fill' => array(
+  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+  'color' => array(
+            'argb' => 'FFd9b7f4')
+  ),
+    'borders' => array(
+        'left' => array(
+            'style' => PHPExcel_Style_Border::BORDER_THIN ,
+      'color' => array(
+              'rgb' => '3a2a47'
+            )
+        )
+    )
+));
+La forma más rápida de dar formato a las celdas es a través de arreglos en los cuales se define todo el conjunto de formato que deseamos aplicar a las celdas. Veamos cómo se aplican.
+
+$objPHPExcel->getActiveSheet()->getStyle('A1:D1')->applyFromArray($estiloTituloReporte);
+$objPHPExcel->getActiveSheet()->getStyle('A3:D3')->applyFromArray($estiloTituloColumnas);
+$objPHPExcel->getActiveSheet()->setSharedStyle($estiloInformacion, "A4:D".($i-1));
+Como pueden ver el formato se aplicó de 2 formas diferentes una con getStyle(celda)->applyFromArray($arreglo) y la otra con setSharedStyle($estilo, celdas). ¿Cuál es la diferencia entre una y otra?, esto lo podemos apreciar cuando se aplican bordes: con la primer opción por ejemplo si se indica que se van a aplicar bordes superiores a las celdas desde B5 hasta F15, solo estaría aplicando el borde superior a la fila 5 debido a que toma el rango como si fuera una sola celda. En cambio con la segunda opción los bordes superiores se aplicarían a todas las filas desde la 5 hasta la 15 digamos que el formato se aplica a cada celda del rango indicado.
+
+Ahora procedemos a asignar el ancho de las columnas de forma automática en base al contenido de cada una de ellas y lo hacemos con un ciclo de la siguiente forma.
+
+for($i = 'A'; $i <= 'D'; $i++){
+    $objPHPExcel->setActiveSheetIndex(0)->getColumnDimension($i)->setAutoSize(TRUE);
+}
+Bien, ahora solo agregamos algunos detalles mas
+
+// Se asigna el nombre a la hoja
+$objPHPExcel->getActiveSheet()->setTitle('Alumnos');
+ 
+// Se activa la hoja para que sea la que se muestre cuando el archivo se abre
+$objPHPExcel->setActiveSheetIndex(0);
+ 
+// Inmovilizar paneles
+//$objPHPExcel->getActiveSheet(0)->freezePane('A4');
+$objPHPExcel->getActiveSheet(0)->freezePaneByColumnAndRow(0,4);
+Ya para terminar vamos a enviar el archivo para que el usuario lo descargue.
+
+// Se manda el archivo al navegador web, con el nombre que se indica, en formato 2007
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment;filename="Reportedealumnos.xlsx"');
+header('Cache-Control: max-age=0');
+ 
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+$objWriter->save('php://output');
+exit;
+}
+else{
+    print_r('No hay resultados para mostrar');
+}
+OK, con eso se termina este ejercicio, más abajo está el link para que descarguen el ejemplo, para más información sobre esta librería puedes revisar su documentación o dejar algún comentario.
+
+Si el contenido te fue de utilidad dale me gusta a nuestra página de Facebook.
+
+download
+
+COMPÁRTELO:
+Facebook41TwitterGoogleTumblrPinterestRedditLinkedIn1
+RELACIONADO
+Como integrar la libreria fpdf con el framework codeigniter
+Como integrar la libreria fpdf con el framework codeigniter
+En "CodeIgniter"
+Crear un reporte con FPDF usando PHP y MySQL
+En este post realizaremos un historial clínico de un paciente, en el cual contendrá los datos generales del paciente y un listado de las consultas médicas que realizo, el historial estará en formato PDF. Para realizar esto utilizaremos: el lenguaje de programación PHP, el gestor de base de datos MySQL…
+En "MySQL"
+Ejemplo de Drag and Drop jQuery con PHP y MySQL
+Ejemplo de Drag and Drop jQuery con PHP y MySQL
+En "jQuery"
+
+ 
+denker
+ACERCA DEL AUTOR: DENKER
+68 COMENTARIOS EN “CREAR UN REPORTE EN EXCEL CON PHP Y MYSQL”
+ANDRES dice:
+25 noviembre, 2013 a las 8:01
+Probare este sistema de reportes.
+
+Responder
+Eminson Mendoza dice:
+4 diciembre, 2013 a las 12:21
+Muy bueno me sirvió de mucho :)
+
+Responder
+Janett dice:
+6 enero, 2014 a las 20:01
+Muy buena aportacion, gracias por la ayuda!!!
+
+Responder
+alejandro dice:
+21 enero, 2014 a las 14:36
+Facil, me anduvo de una!
+
+Responder
+Williams Nasser dice:
+1 febrero, 2014 a las 18:56
+Excelente ejemplo muchisimas gracias, falto algunos parametros como por ejemplo establecer filtros y tambien algo que no e encontrado establecer tipo de datos como por ejemplo fecha, y establecer formulas pero en general doy 100 puntos
+
+Responder
+Rosy dice:
+3 febrero, 2014 a las 21:53
+Si necesito hacer un libro de excel con varias hojas, cómo lo hago???? Es urgente, please!!!!
+
+Responder
+denker dice:
+4 febrero, 2014 a las 12:28
+Puedes revisar la documentación aquí te dejo un link que te puede servir
+
+https://github.com/PHPOffice/PHPExcel/blob/develop/Documentation/markdown/Overview/06-Worksheets.md
+
+saludos
+
+Responder
+aha dice:
+4 febrero, 2014 a las 9:41
+muchas gracias me ayudaste bastante XD
+
+Responder
+Fernando dice:
+20 febrero, 2014 a las 11:32
+Excelente…! me esta sirviendo mucho, hay forma de agregarle una imagen al reporte??
+
+Responder
+carlos dice:
+27 febrero, 2014 a las 10:14
+sos mostro tio!!!!!!!! he estado buscando esto por todos lados me has salvado el pellejo, y no solo lo creas si no que lo personalisas muy bn excelente excelente =)
+
+Responder
+oscar castro fernandez dice:
+11 marzo, 2014 a las 17:05
+me marca error al crear la tabla
+
+#1064 – You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ‘CREATE TABLE IF NOT EXISTS `repexcel`.`carrera` (
+`idcarrera` INT UNSIGNED NOT’ at line 17
+
+Responder
+Hugo dice:
+18 marzo, 2014 a las 19:53
+Hola, sería bueno que pongan ya el script para crear la base de datos porque al copiar pegar no funciona, da varios errores. Saludos.
+
+Responder
+yo dice:
+21 marzo, 2014 a las 17:23
+no me sirvio
+:(
+
+Responder
+hfx dice:
+25 marzo, 2014 a las 18:19
+excelso , excelente explicación. hace mucho use esta librería , y veo que en 3 años a evolucionado mucho y es mucho mas útil que en sus inicio.
+
+Responder
+PPK17 dice:
+25 marzo, 2014 a las 22:26
+Me sirvió de mucho y lo complementé con la documentación y los ejemplos q trae la libreria. Ahi van a encontrar más cosas que no pudieran encontrar aqui, así q se se las recomiendo leerlas y analizarlas tambien.
+
+Responder
+Francisco dice:
+28 marzo, 2014 a las 15:31
+Hola lo ocupe de forma local en mi pc para generar el reporte y ni un problema pero luego lo subí a la web y me arroja el archivo vació y el excel me arroja que no puede abrir el archivo por que el formato o la extensión no son validos
+a nadie mas le paso eso ??
+
+Responder
+Mike dice:
+4 abril, 2014 a las 14:03
+Me aparece un mensaje que dice “Excel no puede abrir el archivo Reportedealumnos.xlsx porque el formato o la extension de este no son validos”…….. Que hago??
+
+Responder
+sun2012 dice:
+16 mayo, 2014 a las 10:06
+Solo dale abrir, no pasa nada excel lo identifica y lo abre de todos modos, saludos.
+
+Responder
+Miguel dice:
+6 abril, 2014 a las 17:30
+al llegar al final , osea al generar el archivo me lo genera con errores y cuando lo abro solo son simbolos asi :
+
+Ï?Kúmy½ü½\-òt%sJ¾/¿þPKDîWÔ}edocProps/core.xml¥[oã ßû+ï8½¨µWêMûÐHÙMªÝW SÖdï¯_ ë^*Uò:ß9Û¶AÁ:©Õç(®Tõ?¬î²sgJ°F+á¾¬Jn ®-,¬6`½r73¼öÞ8¾¹I T´mO[Ãø«L)=#-x&g$ffpÄ{KÁK³±M2@-(ïH>ÉÉ+ëÁ¶îÓ¤ÈVúÞÀ§èAè­ØuÝ¤;Nh?’æ÷Ë´j&U®JÁnym«¹¬7Ð,°%)1Å9?y?IWý{ø#PîWÜ@a´b·ÈAù}|}³ºÃÕæ’ ßÙ*?/¦´È/2zZPxcòêÚî;}ÏöàrðÒ7Pý£­t»åÐ ®ZüX ÍûåÏûÊ·ÒøpCx »¡Xä6ÏÀýÈÿô¶ÂUv_6j2ÓÁ¨jmû¡Ä¤ÝëÍQýPKDs{Y³¦xl/theme/theme1.xmlíYOoÛ6¿ïSº·²lÉu:EìØëÖ¦ ·C´DK¬)Q é¤¾ íqÀaÝ°ËÝv¶h]ºO­ÃÖý {úcé6iSlCë-¿÷ïñQ¾|å^ÌÐ!ò¤k9”Ï]ëÖhx¡c!©p`ÆÒµæDZW¶>¸7UDbA£¥µµ`>`ð(MøLø¹D”ÇS’ûsÙgbÖµ@NÀFä
+
+algun tipo de ayuda para este casoo?? porfavor
+
+Responder
+Adriz dice:
+3 diciembre, 2015 a las 12:15
+Alguna ayuda Miguel??
+
+Responder
+Rodrigo dice:
+19 abril, 2014 a las 21:47
+Excelente librería, tuve un par de errores, como aporte dejare la solución en agradecimiento:
+
+Generaba el archivo pero me daba un error decía:
+
+Excel no puede abrir el archivo ‘Reportedealumnos.xlsx’ por que el formato o la extensión de este no son validos…
+
+Solución, al menos para mi:
+
+La librería utiliza php_zip.dll la cual esta comentareada en lo archivos de php.ini bueno como no sabia cual de todos descomentarear lo hice en todos, los cuales están en las ubicaciones:
+
+– c:\windows\php.ini
+– c:\appserv\php5\php.ini-dist
+– c:\appserv\php5\php.ini-recommended
+– c:\AppServ\www\server\php\php.ini
+
+Buscamos y cambiamos
+;extension=php_zip.dll a extension=php_zip.dll
+
+Si, sin el punto y coma del inicio, una vez hecho esto reiniciamos el servidor apache y todo funcionando de maravilla. Nuevamente gracias por la ayuda.
+
+Responder
+da dice:
+27 noviembre, 2015 a las 10:16
+amigo tengo el mismo problema que tenías pero no encuentro los archivos ni la localizacion :S help !!!!!
+
+Responder
+Taty Andrade dice:
+23 abril, 2014 a las 20:04
+Muy buen aporte me sirvio de mucho.. pero tengo un problema no se si alguien le sucedió lo mismo; al momento de descargar el reporte me sale en la info de descarga “Tiempo de descarga desconocido y jamas se descarga”; le quite la parte del codigo en la que se manda a la descarga y simplemente le puse que se guarde el archivo y se queda la pagina en espera como cargando, pero si crea el archivo y esta todo correcto… ojala me puedan ayudar
+Gracias
+
+Responder
+dani dice:
+19 mayo, 2014 a las 13:30
+Grandisimo aporte!!
+
+Responder
+johnny luis dice:
+6 junio, 2014 a las 9:43
+Lineas abajo te colocare mi codigo; mi problema es que se genera el excel pero sin ningún resultado. favor te agradeceria tu ayuda
+
+Ver Historial
+
+var sp = ”;
+function animaTitulo()
+{
+var actual = document.title;
+document.title = actual.substr(1) + sp + actual.substring(0, 1);
+if (navigator.appVersion.indexOf(‘MSIE’)>=0)
+sp = (actual.substring(0, 1)==’ ‘)?” “:””;
+setTimeout(‘animaTitulo()’, 200);
+}
+
+Display();
+include(“conectar.php”);
+$link=conectar();
+
+$resultado=mysql_query(“select equipos_codigo,fecha,horometro,status from historial,status,servicios where servicios_idservicios=Idservicios and status_idstatus=Idstatus”,$link);
+
+//$consulta = “SELECT* FROM historial INNER JOIN status ON status_idstatus=Idstatus “;
+//$consulta .= ” INNER JOIN servicios ON servicios_idservicios=Idservicios “;
+
+//$resultado = $link->query($consulta);
+//$resultado = mysql_query($consulta);
+if(mysql_num_rows($resultado) > 0 ){
+
+date_default_timezone_set(‘America/Mexico_City’);
+if (PHP_SAPI == ‘cli’)
+die(‘Este archivo solo se puede ver desde un navegador web’);
+/** Se agrega la libreria PHPExcel */
+require_once ‘lib/PHPExcel/PHPExcel.php’;
+
+// Se crea el objeto PHPExcel
+$objPHPExcel = new PHPExcel();
+// Se asignan las propiedades del libro
+$objPHPExcel->getProperties()->setCreator(“Codedrinks”) // Nombre del autor
+->setLastModifiedBy(“Codedrinks”) //Ultimo usuario que lo modificó
+->setTitle(“Reporte Excel con PHP y MySQL”) // Titulo
+->setSubject(“Reporte Excel con PHP y MySQL”) //Asunto
+->setDescription(“Reporte de alumnos”) //Descripción
+->setKeywords(“reporte alumnos carreras”) //Etiquetas
+->setCategory(“Reporte excel”); //Categorias
+$tituloReporte = “Reporte de historial”;
+$titulosColumnas = array(‘EQUIPO’, ‘FECHA DE REPORTE’, ‘HOROMETRO’, ‘STATUS’);
+// Se combinan las celdas A1 hasta D1, para colocar ahí el titulo del reporte
+$objPHPExcel->setActiveSheetIndex(0)
+->mergeCells(‘A1:D1’);
+// Se agregan los titulos del reporte
+$objPHPExcel->setActiveSheetIndex(0)
+->setCellValue(‘A1’,$tituloReporte) // Titulo del reporte
+->setCellValue(‘A3’, $titulosColumnas[0]) //Titulo de las columnas
+->setCellValue(‘B3’, $titulosColumnas[1])
+->setCellValue(‘C3’, $titulosColumnas[2])
+->setCellValue(‘D3’, $titulosColumnas[3]);
+//Se agregan los datos de los alumnos
+
+$i = 4; //Numero de fila donde se va a comenzar a rellenar
+while ($fila = mysql_fetch_array($resultado)) {
+$objPHPExcel->setActiveSheetIndex(0)
+->setCellValue(‘A’.$i, $fila[‘equipos_codigo’])
+->setCellValue(‘B’.$i, $fila[‘fecha’])
+->setCellValue(‘C’.$i, $fila[‘horometro’])
+->setCellValue(‘D’.$i, $fila[‘status’]);
+$i++;
+}
+$estiloTituloReporte = array(
+‘font’ => array(
+‘name’ => ‘Verdana’,
+‘bold’ => true,
+‘italic’ => false,
+‘strike’ => false,
+‘size’ =>16,
+‘color’ => array(
+‘rgb’ => ‘FFFFFF’
+)
+),
+‘fill’ => array(
+‘type’ => PHPExcel_Style_Fill::FILL_SOLID,
+‘color’ => array(
+‘argb’ => ‘FF220835’)
+),
+‘borders’ => array(
+‘allborders’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_NONE
+)
+),
+‘alignment’ => array(
+‘horizontal’ => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+‘vertical’ => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+‘rotation’ => 0,
+‘wrap’ => TRUE
+)
+);
+
+$estiloTituloColumnas = array(
+‘font’ => array(
+‘name’ => ‘Arial’,
+‘bold’ => true,
+‘color’ => array(
+‘rgb’ => ‘FFFFFF’
+)
+),
+‘fill’ => array(
+‘type’ => PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
+‘rotation’ => 90,
+‘startcolor’ => array(
+‘rgb’ => ‘c47cf2’
+),
+‘endcolor’ => array(
+‘argb’ => ‘FF431a5d’
+)
+),
+‘borders’ => array(
+‘top’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_MEDIUM ,
+‘color’ => array(
+‘rgb’ => ‘143860’
+)
+),
+‘bottom’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_MEDIUM ,
+‘color’ => array(
+‘rgb’ => ‘143860’
+)
+)
+),
+‘alignment’ => array(
+‘horizontal’=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+‘vertical’ => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+‘wrap’ => TRUE
+)
+);
+
+$estiloInformacion = new PHPExcel_Style();
+$estiloInformacion->applyFromArray( array(
+‘font’ => array(
+‘name’ => ‘Arial’,
+‘color’ => array(
+‘rgb’ => ‘000000’
+)
+),
+‘fill’ => array(
+‘type’ => PHPExcel_Style_Fill::FILL_SOLID,
+‘color’ => array(
+‘argb’ => ‘FFd9b7f4’)
+),
+‘borders’ => array(
+‘left’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_THIN ,
+‘color’ => array(
+‘rgb’ => ‘3a2a47’
+)
+)
+)
+));
+$objPHPExcel->getActiveSheet()->getStyle(‘A1:D1’)->applyFromArray($estiloTituloReporte);
+$objPHPExcel->getActiveSheet()->getStyle(‘A3:D3’)->applyFromArray($estiloTituloColumnas);
+$objPHPExcel->getActiveSheet()->setSharedStyle($estiloInformacion, “A4:D”.($i-1));
+for($i = ‘A’; $i setActiveSheetIndex(0)->getColumnDimension($i)->setAutoSize(TRUE);
+}
+// Se asigna el nombre a la hoja
+$objPHPExcel->getActiveSheet()->setTitle(‘Alumnos’);
+
+// Se activa la hoja para que sea la que se muestre cuando el archivo se abre
+$objPHPExcel->setActiveSheetIndex(0);
+
+// Inmovilizar paneles
+//$objPHPExcel->getActiveSheet(0)->freezePane(‘A4’);
+$objPHPExcel->getActiveSheet(0)->freezePaneByColumnAndRow(0,4);
+// Se manda el archivo al navegador web, con el nombre que se indica, en formato 2007
+header(‘Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet’);
+header(‘Content-Disposition: attachment;filename=”Reportedealumnos.xlsx”‘);
+header(‘Cache-Control: max-age=0’);
+
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, ‘Excel2007’);
+$objWriter->save(‘php://output’);
+exit;
+}
+else{
+print_r(‘No hay resultados para mostrar’);
+}
+
+Responder
+sun2012 dice:
+11 junio, 2014 a las 18:55
+Hola, para unir las tablas debes ocupar inner join, saludos.
+
+Responder
+ClikC dice:
+6 junio, 2014 a las 15:07
+Lo probrae gracias por el aporte.
+
+Responder
+alonso dice:
+11 junio, 2014 a las 20:44
+muy buenoo pero tengo un problema no se como poner la cabesera estaticaa k no se muva mejor dicho blokeado o inmovilizar una collumna bno se k funcion usar
+
+Responder
+josé dice:
+16 junio, 2014 a las 3:36
+Muchas gracias por este gran aporte. Me ha servido de mucho de verdad
+Todo bien para consultas de tablas con pocos registros, pero he tenido problemas para consultas de muchos registros. Especificamente una consulta de 40000 registros aprox que me fatal error Maximum execution time of 60 seconds exceeded o “Fatal error: Allowed memory size of 67108864 bytes exhausted (tried to allocate 32 bytes)” y me manda a los archivos PHPExcel/worksheet.php (no recuerdo las linas en este momento) o al archivo PHPExcel/Cell/DefaultValueBinder.php creo que la linea 1218.
+ojo, me ha dado distintos errores a veces porque estuve probando para modificar los valores en php.ini ya que he estado probando en servidor local
+Agradezco cualquier sugerencia que me puedan dar. Hasta pronto
+
+Responder
+Carlos dice:
+18 junio, 2014 a las 8:12
+Estimado Genial ,slaio de una . pero tengo0 una consulta como ahgo para que lo muestre en una pagina web antes de descargarlo en excel , si complentas con eso seria chevere
+
+Responder
+Edher dice:
+18 junio, 2014 a las 8:48
+Que tal buen dia, quisiera saber, si hay alguna opcion derecta en php para poder bloquear el archivo de Excel y no le hagan cambios.
+
+Responder
+alejon dice:
+19 junio, 2014 a las 6:06
+Donde puedo hallar la clase phpExcel?
+
+Responder
+alejon dice:
+19 junio, 2014 a las 7:08
+Ya halle la libreria, lo adapte a mi codigo pero esta pasando por este mensaje:No hay resultados para mostrar
+si pudieran ayudarme.
+este es mi codigo:
+
+Cédula:
+
+Excel
+
+<!–
+–>
+
+<?php
+
+if ($_POST['cedula'] && $_POST['buscar'])
+{
+$consulta2 = "SELECT * FROM deuda WHERE deuda.cedula = '{$_POST['cedula']}' ORDER BY nroapto";
+$consulta3 = @pg_query($connect,$consulta2);
+}
+
+que adapte al reporteexcel.php
+
+Responder
+DanielSquishy dice:
+8 julio, 2014 a las 12:56
+Cuando le doy click al link de descargar archivo, me manda el codigo fuente en la pagina, y no descarga nada que puedo hacer?
+
+Responder
+Rodrigo dice:
+14 julio, 2014 a las 20:02
+Tu interprete de apache no esta corriendo, dicho de otra manera ya revisaste si el servidor apache esta funcionando? o si la pagina esta alojada en la carpeta del servidor?
+
+Responder
+Angel De la Cruz dice:
+29 julio, 2014 a las 12:24
+Cuando descargo el archivo me aparece que esta dañado o que la extensión es incorrecta, y solo aparece un botón de aceptar y no abre nada. Que estaria pasando ahi?
+
+Responder
+Esar J. Ramirez dice:
+31 julio, 2014 a las 15:24
+Muchas, muchas, muchas, pero muchas gracias!!!
+
+Responder
+Nicolás dice:
+23 agosto, 2014 a las 11:36
+Hola! está muy bueno el tutorial peeeeero cuando descargo el archivo me tira que está dañado, vi que Angel de la cruz le pasó lo mismo. Al abrir el archivo con notepad++ veo que al principio me agrega un espacio en blanco… pero no encuentro dónde se está agregando ese espacio… que puede ser??
+
+gracias!!!
+
+Responder
+fredy dice:
+25 agosto, 2014 a las 10:34
+Actualmente me encuentro desarrollando una pequeña aplicación web para la cual necesito la generación de reportes .xls, para la aplicación utilizo una arquitectura MVC donde no seria posible dejar todo en un solo .php como lo planteas. Al querer separarlo me permite descargar el archivo pero no es posible verlo desde excel y al abrirlo como archivo plano es totalmente ilegible.
+quisiera saber como podría arreglar esto?
+
+Responder
+Israel Sanchez dice:
+8 septiembre, 2014 a las 12:18
+Woooooooooo ……….. excelente aporte amigo .. gracias …. enserio gracias
+
+Responder
+Renn dice:
+17 septiembre, 2014 a las 10:10
+Muy bueno ! Me sirvio y es my facil de usar. Muchas gracias por tu trabajo
+
+Responder
+javierfer dice:
+19 septiembre, 2014 a las 10:11
+Great!
+
+Responder
+Antonio dice:
+17 noviembre, 2014 a las 19:57
+Buenas noches, me interesa contactar con usted, necesito realizar una libreria similar.
+Cordialmente, Antonio
+
+Responder
+denker dice:
+26 noviembre, 2014 a las 20:11
+Hola amigo, puedes enviarme un correo a codedrinks@gmail.com
+
+Responder
+Francisco dice:
+9 diciembre, 2014 a las 11:17
+Tengo el siguiente código
+
+load(‘formato_shell.csv’);
+$nuevo = new PHPExcel();
+$nuevo->setActiveSheetIndex(0);
+
+for ($i = 0; $i getWorksheetIterator() as $worksheet){
+foreach($worksheet->getRowIterator() as $row){
+$cellIterator = $row->getCellIterator();
+$cellIterator->setIterateOnlyExistingCells(false);
+foreach($cellIterator as $cell){
+$nuevo->getActiveSheet()->setCellValue($cell->getCoordinate(), $cell->getCalculatedValue());
+$celda = substr($cell->getCoordinate(), 1);
+$coord = (string)”B$celda”;
+if ($cell->getCalculatedValue() !== ‘Product Quantity’){
+if (trim($cell->getCalculatedValue()) === trim($claves[$i])){
+echo “” . $coord . “”;
+$nuevo->getActiveSheet()->setCellValue(“$coord”, $cantidades[$i]);
+//$nuevo->getActiveSheet()->getCell(“$coord”)->setValue($cantidades[$i]);
+//echo $nuevo->getActiveSheet()->getCell(“$coord”)->getValue();
+//break;
+}
+}
+}
+}
+}
+}
+
+$objWriter = PHPExcel_IOFactory::createWriter($nuevo, ‘CSV’);
+$objWriter->save(‘P-001.csv’);
+
+chmod(‘P-001.csv’, 0777);
+
+lo que necesito es leer un archivo y copiar el contenido en otro pero cuando la clave de un producto coincide con las claves que contiene el archivo debo colocar en la celda BX la cantidad de producto que se va a pedir pero no lo hace parece que se inicializa o algo así y siempre se va vacía la celda, espero me puedan ayudar
+
+Responder
+Javier Davila dice:
+15 enero, 2015 a las 9:31
+Excelente aporte. Gracias… Es posible generar el reporte en formato Excel 2003 ?
+
+Responder
+fer dice:
+2 febrero, 2015 a las 20:57
+que buen aporte me sirvio de mucho gracias, y tengo una pregunta, como puedo agregar una imagen al reporte que se esta generando
+
+Responder
+Alexis dice:
+11 febrero, 2015 a las 22:02
+como puedo hacer que el excel reconozca las ñ ???
+
+Responder
+Jaime Eduardo dice:
+11 marzo, 2015 a las 18:16
+Se pueden mostrar tambien imagenes jaladas de la base de datos e insertar en el archivo excel? las imagenes se guardan en un campo tipo blob. Gracias
+
+Responder
+maykol dice:
+20 marzo, 2015 a las 9:13
+buena ayuda! pero cuando intento abrir el reporte de excel me da error dice q el formato de la extencion no es valido que compruebe que el archivo no este dañado
+
+Responder
+jorge dice:
+21 marzo, 2015 a las 11:11
+no reconoce la extencion en office 2010, dice que esta dañado y no reconoce este formato
+
+Responder
+wilmer dice:
+24 marzo, 2015 a las 9:24
+Holas.. amigo Una sola Pregunta el codigo fuente solo sirver para axcel 2007 ? digo por que me sale archivo dañado ah estoy exportado axcel 2013..
+Espero su Respuesta.. Saludos
+
+Responder
+ALBERTO dice:
+17 abril, 2015 a las 15:33
+Tengo un problema: en un campo generado por mi bd tengo datos con cero por la izquierda asi por ejemplo (012587), pero no me exporta el cero al excel, en este ejemplo digamos que la columa A contiene dichos valores como puedo ingresar el codigo del estilo para que me muestre, estuve revisando algunos tutoriales y al parecer esta es la función PHPExcel_Cell_DataType::TYPE_STRING.
+Agradecere sus respuestas de entemano
+
+Responder
+enrique dice:
+26 abril, 2015 a las 23:19
+Muy bien, gracias por el aporte
+
+Responder
+facundo dice:
+2 mayo, 2015 a las 13:08
+Buenos dias, como seria para crear la base de datos y la tabla, descargue el ejemplo y no me aparece, en el navegador me aparece lo siguiente:
+
+Warning: mysqli::mysqli(): (HY000/1045): Access denied for user ‘usuario’@’localhost’ (using password: YES) in C:\xampp\htdocs\reporteexcel\reporteexcel.php on line 2
+La conexiÃ³n con el servidor de base de datos fallÃ³: Access denied for user ‘usuario’@’localhost’ (using password: YES)
+
+deduzco que es porque no tengo la base de datos
+
+Responder
+OSCAR dice:
+12 mayo, 2015 a las 14:49
+Amigo una inquietud yo corro la aplicacion, y me descarga el archivo. cuando lo abro me aparece esto
+Fatal error: Class ‘ZipArchive’ not found in C:\AppServ\www\proyecto\lib\PHPExcel\PHPExcel\Writer\Excel2007.php on line 227
+
+este es mi codigo que pudo pasar?
+
+0){
+
+date_default_timezone_set(‘America/Bogota’);
+
+if (PHP_SAPI == ‘cli’)
+die(‘Este archivo solo se puede ver desde un navegador web’);
+
+/** Se agrega la libreria PHPExcel */
+require_once ‘lib/PHPExcel/PHPExcel.php’;
+
+// Se crea el objeto PHPExcel
+$objPHPExcel = new PHPExcel();
+
+$objPHPExcel->getProperties()->setCreator(“Codedrinks”) //Autor
+->setLastModifiedBy(“Codedrinks”) //Ultimo usuario que lo modificó
+->setTitle(“Reporte Excel con PHP y MySQL”)
+->setSubject(“Reporte Excel con PHP y MySQL”)
+->setDescription(“Reporte de facilitador”)
+->setKeywords(“reporte nombres facilitadores”)
+->setCategory(“Reporte excel”);
+
+$tituloReporte = “Relación de facilitadores”;
+$titulosColumnas = array(‘NUMERO DE DOCUMENTO’, ‘NOMBRES Y APELLIDOS’, ‘CODIGO’);
+
+$objPHPExcel->setActiveSheetIndex(0)
+->mergeCells(‘A1:C1’);
+
+// Se agregan los titulos del reporte
+$objPHPExcel->setActiveSheetIndex(0)
+->setCellValue(‘A1’,$tituloReporte)
+->setCellValue(‘A3’, $titulosColumnas[0])
+->setCellValue(‘B3’, $titulosColumnas[1])
+->setCellValue(‘C3’, $titulosColumnas[2]);
+
+$i = 4;
+while ($fila =mysql_fetch_array($resultado)){
+$objPHPExcel->setActiveSheetIndex(0)
+->setCellValue(‘A’.$i, $fila[‘n_id’])
+->setCellValue(‘B’.$i, $fila[‘nom_f’])
+->setCellValue(‘C’.$i, $fila[‘codigo’]);
+$i++;
+}
+
+$estiloTituloReporte = array(
+‘font’ => array(
+‘name’ => ‘Verdana’,
+‘bold’ => true,
+‘italic’ => false,
+‘strike’ => false,
+‘size’ =>16,
+‘color’ => array(
+‘rgb’ => ‘FFFFFF’
+)
+),
+‘fill’ => array(
+‘type’	=> PHPExcel_Style_Fill::FILL_SOLID,
+‘color’	=> array(‘argb’ => ‘FF220835’)
+),
+‘borders’ => array(
+‘allborders’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_NONE
+)
+),
+‘alignment’ => array(
+‘horizontal’ => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+‘vertical’ => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+‘rotation’ => 0,
+‘wrap’ => TRUE
+)
+);
+
+$estiloTituloColumnas = array(
+‘font’ => array(
+‘name’ => ‘Arial’,
+‘bold’ => true,
+‘color’ => array(
+‘rgb’ => ‘FFFFFF’
+)
+),
+‘fill’ => array(
+‘type’	=> PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
+‘rotation’ => 90,
+‘startcolor’ => array(
+‘rgb’ => ‘c47cf2’
+),
+‘endcolor’ => array(
+‘argb’ => ‘FF431a5d’
+)
+),
+‘borders’ => array(
+‘top’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_MEDIUM ,
+‘color’ => array(
+‘rgb’ => ‘143860’
+)
+),
+‘bottom’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_MEDIUM ,
+‘color’ => array(
+‘rgb’ => ‘143860’
+)
+)
+),
+‘alignment’ => array(
+‘horizontal’ => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+‘vertical’ => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+‘wrap’ => TRUE
+));
+
+$estiloInformacion = new PHPExcel_Style();
+$estiloInformacion->applyFromArray(
+array(
+‘font’ => array(
+‘name’ => ‘Arial’,
+‘color’ => array(
+‘rgb’ => ‘000000’
+)
+),
+‘fill’ => array(
+‘type’	=> PHPExcel_Style_Fill::FILL_SOLID,
+‘color’	=> array(‘argb’ => ‘FFd9b7f4’)
+),
+‘borders’ => array(
+‘left’ => array(
+‘style’ => PHPExcel_Style_Border::BORDER_THIN ,
+‘color’ => array(
+‘rgb’ => ‘3a2a47’
+)
+)
+)
+));
+
+$objPHPExcel->getActiveSheet()->getStyle(‘A1:C1’)->applyFromArray($estiloTituloReporte);
+$objPHPExcel->getActiveSheet()->getStyle(‘A3:C3’)->applyFromArray($estiloTituloColumnas);
+$objPHPExcel->getActiveSheet()->setSharedStyle($estiloInformacion, “A4:C”.($i-1));
+
+for($i = ‘A’; $i setActiveSheetIndex(0)
+->getColumnDimension($i)->setAutoSize(TRUE);
+}
+
+// Se asigna el nombre a la hoja
+$objPHPExcel->getActiveSheet()->setTitle(‘Facilitadores’);
+
+// Se activa la hoja para que sea la que se muestre cuando el archivo se abre
+$objPHPExcel->setActiveSheetIndex(0);
+// Inmovilizar paneles
+//$objPHPExcel->getActiveSheet(0)->freezePane(‘A4’);
+$objPHPExcel->getActiveSheet(0)->freezePaneByColumnAndRow(0,4);
+
+// Se manda el archivo al navegador web, con el nombre que se indica (Excel2007)
+header(‘Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet’);
+header(‘Content-Disposition: attachment;filename=”Reportedealumnos.xls”‘);
+header(‘Cache-Control: max-age=0’);
+
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, ‘Excel2007’);
+$objWriter->save(‘php://output’);
+exit;
+
+}
+else{
+print_r(‘No hay resultados para mostrar’);
+}
+
+?>
+
+Responder
+GALA dice:
+1 octubre, 2015 a las 9:30
+Saludos.
+Yo tenía el problema que al momento de generar el archivo no mostraba ningún contenido, tengo Office 2013, así que puede ser por eso, no sé, lo solucione cambiando estás líneas:
+
+header(‘Content-Disposition: attachment;filename=”Reportedealumnos.xlsx”‘);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, ‘Excel2007’);
+
+por:
+header(‘Content-Disposition: attachment;filename=”Reportedealumnos.xls”‘);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, ‘Excel5’);
+
+El archivo generado es más “viejo” versión 97-2003. Espero les sea de ayuda.
+
+Responder
+elena dice:
+5 octubre, 2015 a las 13:15
+por que me marca error desde la 2 linea?
+$conexion = new mysqli(‘localhost’,’root’,’1′,’conuee’,3306);
+if (mysqli_connect_errno()) {
+printf(“La conexión con el servidor de base de datos falló: %s\n”, mysqli_connect_error());
+exit();
+}
+
+Responder
+sun2012 dice:
+12 octubre, 2015 a las 19:39
+Algún parámetro de conexión esta mal.
+
+Responder
+Roberto dice:
+13 octubre, 2015 a las 3:15
+Buenos días, estoy teniendo un problema con una función que crea un excel. A ver si alguno me puede echar un cable.
+
+Resulta que yo tengo una función donde:
+
+– Extraigo datos de una base de datos.
+– Configuro un excel con esos datos.
+– Guardo el excel.
+
+Hasta ahí va bien.
+
+El problema principal es que tengo varias tablas, y me gustaría que cada tabla fuera una hoja distinta en el excel.
+
+He intentado hacerlo de muchas maneras pero o no me lo hace, o necesito repetir el código de creación del excel una y otra vez, haciendo que el programa sea increíblemente lento e inestable.
+
+Por lo que por ahora, estoy creando el excel hoja a hoja y luego lo junto de forma manual, lo cual cuando haya muchos excel resultará tedioso.
+
+Existiría alguna forma de hacerlo? o estoy diciendo locuras?
+
+Hasta ahora he intentado:
+
+– Crear otra función fuera que cargue el excel y meterlas todas antes del $objWriter->save($documento);
+– Repetir el código una y otra vez de todas las tablas. Funciona a medias porque como digo da problemas el tiempo de conexión, porque las tablas son muy grandes.
+-Llamar a la función save desde donde invoco a la función y crear la nueva hoja allí, el problema es que no me reconoce como que he creado una hoja y al intentar escribir en la segunda me dice que no puede porque solo hay una.
+–
+
+Responder
+Roberto dice:
+13 octubre, 2015 a las 6:32
+Joe, bastaba que preguntara algo en algún lugar para que encontrara la solución jaja.
+
+Al final lo resolví haciendo cada Excel por separado y luego uniendolos todos mediante el addexternalsheet.
+
+Pongo el código por si alguno lo necesita:
+
+//Hay que borrar el archivo si ya existe, si no da conflicto
+if (file_exists(“lista_excel/ruta del fichero”)) {
+unlink (“fichero”);
+}
+
+//lleno el array con la ruta de los archivos que quiero unir.
+
+$listas=array();
+$directorio = opendir(“lista_excel/”); //ruta actual
+while ($archivo = readdir($directorio)) //obtenemos un archivo y luego otro sucesivamente
+{
+if ($archivo != ‘.’ && $archivo != ‘..’)
+{
+if (is_dir($archivo))//verificamos si es o no un directorio
+{
+echo “[“.$archivo . “]”; //de ser un directorio lo envolvemos entre corchetes
+}
+else
+{
+$listas[]=’lista_excel/’.$archivo;
+}
+}
+}
+//comprobación de que el array se está llenando bien
+/*for($f=0;$f<count($lista);$f++)
+{
+echo $lista[$f];
+echo "”;
+} */
+
+require_once ‘libs/phpexcel/Classes/PHPExcel.php’;
+$bigExcel = new PHPExcel();
+//hay que remover la primera ya que al agregar las otras siempre crea una.
+$bigExcel->removeSheetByIndex(0);
+$objReader = new PHPExcel_Reader_Excel2007();
+
+//cargame cada elemento del array
+foreach ($listas as $lista) {
+$excel = $objReader->load($lista);
+//agregame las hojas
+foreach ($excel->getAllSheets() as $sheet) {
+$bigExcel->addExternalSheet($sheet);
+}
+
+foreach ($excel->getNamedRanges() as $namedRange) {
+$bigExcel->addNamedRange($namedRange);
+}
+}
+
+$writer = new PHPExcel_Writer_Excel2007($bigExcel);
+$writer->save(‘ruta del nuevo archivo a crear.xlsx’);
+
+Responder
+Antonio dice:
+21 octubre, 2015 a las 0:02
+Que tal, buen aporte, tengo un problema, al generar el archivo en el valor de la variable $tituloReporte no me aparece el valor que se le da a la variable, en lugar me aparece la palabra FALSO.
+
+Responder
+Jhon Jame Piguave Herrera dice:
+25 octubre, 2015 a las 17:28
+Cuando subo el archivo a un hospedaje web no funciona,
+en localhost es perfecto, pero en la web no muestra nada
+
+Responder
+Adriz dice:
+3 diciembre, 2015 a las 11:57
+Mi archivo me envía puros signos raros, por que??? En que parte tengo que modificar
+
+Otra cosa me pone mi consulta pero jamas me pone el estilo ni el nombre de las columnas,
+
+Gracias y buen dia a todos
+
+Responder
+Edwin dice:
+17 diciembre, 2015 a las 13:51
+Buenas tardes,
+Me puedes informar si esta clase me sirve para exportar a Excel datos de una bdd Oracle.
+
+Responder
+cesar dice:
+31 enero, 2016 a las 15:42
+buenas tardes, funciona la libreria phpexcel y todo pero si se quiere q el usuario final modifique todos los datos q quiera en excel y haga lo que quiera con formulas y eso…..
+por que estos datos al parecer quedan como bloqueados.
+
+cual es la solucion gracias
+
+Responder
+mike dice:
+2 febrero, 2016 a las 12:19
+En donde declaro que tabla es la que quiero que me cree el reporte?
+
+Responder
+sun2012 dice:
+4 febrero, 2016 a las 19:37
+En la consulta sql
+
+Responder
+DEJA UN COMENTARIO
+
+
+ 
+CATEGORÍAS
+C SHARP
+CODEIGNITER
+CSS
+CURSO BASICO PHP
+DESARROLLO MÓVIL
+DESARROLLO WEB
+DJANGO
+FLASH
+FRAMEWORKS PHP
+HERRAMIENTAS
+HTML5
+ICONOS
+ILLUSTRATOR
+INFOGRAFIA
+INTERNET
+JAVA
+JAVASCRIPT
+JQUERY
+LARAVEL
+LINUX
+MYSQL
+NODEJS
+OCIO
+PHOTOSHOP
+PHP
+PYTHON
+RECOMENDACIONES
+RECURSOS
+SEO
+SERVIDORES
+SIN CATEGORÍA
+SNIPPETS
+SOFTWARE
+TUTORIALES
+VIDEOTUTORIALES
+BitMagnum
+FACEBOOK
+
+AÑÁDENOS A TUS CÍRCULOS
+
+LO MÁS LEÍDO
+Crear un reporte en Excel con PHP y MySQL
+Ejemplo jQgrid: Mostrar datos de una base de datos MySQL
+Crear un reporte con FPDF usando PHP y MySQL
+Como subir una pagina web a internet paso a paso
+Restablecer contraseña mediante correo electrónico con PHP y MySQL
+Caja de texto con opción de autocompletado utilizando PHP, MySQL y jQuery
+Google API Chart: Ejemplo de grafica de barras con PHP, jQuery y MySQL
+LO MÁS RECIENTE
+Curso Java: Introducción
+Crud PHP y MySQL
+PageSpeed Insights
+ED GRID Framework Css
+FORO PHP Y MYSQL – FINAL
+Can I use
+Font Awesome – Letras tipo iconos
+TinyPNG: compresor de imágenes png
+©2016 Codedrinks 
