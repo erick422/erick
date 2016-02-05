@@ -1,3 +1,4 @@
+<?php
 	require_once 'clsexcel/PHPExcel.php';
 
 	$objPHPExcel = new PHPExcel();
@@ -36,5 +37,5 @@ header('Cache-Control: max-age=0');
 	exit();
 	
 	
-	
+?>
 	http://phpexcel.codeplex.com/releases/view/119187
