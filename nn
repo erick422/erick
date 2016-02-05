@@ -1,0 +1,40 @@
+	require_once 'clsexcel/PHPExcel.php';
+
+	$objPHPExcel = new PHPExcel();
+	// Se asignan las propiedades del libro
+	$objPHPExcel->getProperties()->setCreator("GEMA") // Nombre del autor
+	    ->setLastModifiedBy("GEMA") //Ultimo usuario que lo modificó
+	    ->setTitle("Reporte Evaluacion FDE GEMA") // Titulo
+	    ->setSubject("Reporte") //Asunto
+	    ->setDescription("Reporte de Puntajes Obtenidos") //Descripción
+	    ->setKeywords("Resultados Obtenidos") //Etiquetas
+	    ->setCategory("Reporte"); //Categorias
+
+	$tituloReporte = "Evaluacion FDE GEMA";
+	$titulosColumnas = array('NOMBRE', 'FECHA DE NACIMIENTO', 'SEXO', 'CARRERA');
+
+
+	$objPHPExcel->setActiveSheetIndex(0)->mergeCells('A1:D1');
+	 
+	// Se agregan los titulos del reporte
+	$objPHPExcel->setActiveSheetIndex(0)
+	    ->setCellValue('A1',$tituloReporte) // Titulo del reporte
+	    ->setCellValue('A3',  $titulosColumnas[0])  //Titulo de las columnas
+	    ->setCellValue('B3',  $titulosColumnas[1])
+	    ->setCellValue('C3',  $titulosColumnas[2])
+	    ->setCellValue('D3',  $titulosColumnas[3]);
+
+
+
+	 
+header('Content-Type: application/vnd.ms-excel');
+header('Content-Disposition: attachment;filename="ejemplo1.xls"');
+header('Cache-Control: max-age=0');
+
+	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+	$objWriter->save('php://output');
+	exit();
+	
+	
+	
+	http://phpexcel.codeplex.com/releases/view/119187
