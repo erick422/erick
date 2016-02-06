@@ -1,0 +1,383 @@
+<?php
+	require_once 'clsexcel/PHPExcel.php';
+	require('datos/dbmanager.php');	
+	session_start();
+	$objPHPExcel = new PHPExcel();
+	$objPHPExcel->getDefaultStyle()->getFont()->setName('Arial');
+	$objPHPExcel->getDefaultStyle()->getFont()->setSize(10);
+	$objPHPExcel->getProperties()->setCreator("GEMA") // Nombre del autor
+	    ->setLastModifiedBy("GEMA") //Ultimo usuario que lo modificó
+	    ->setTitle("Reporte Evaluacion FDE GEMA") // Titulo
+	    ->setSubject("Reporte") //Asunto
+	    ->setDescription("Reporte de Puntajes Obtenidos") //Descripción
+	    ->setKeywords("Resultados Obtenidos") //Etiquetas
+	    ->setCategory("Reporte"); //Categorias
+		$estiloTituloColumnas = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => true
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => 'D9D9D9')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+		$estilotiendas = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => false
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => 'E47E7E')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+		$evaluacion1 = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => false
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => 'FFFF00')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+		$evaluacion2 = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => false
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => '00B0F0')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+		$evaluacion3 = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => false
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => 'FF0000')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+		$estiloareas = array(
+		    'font' => array(
+		        'name'  => 'Arial',
+		        'bold'  => false
+		    ),
+			'fill' => array(
+			  'type'  => PHPExcel_Style_Fill::FILL_SOLID,
+			  'color' => array(
+			            'rgb' => 'FFEB9C')
+			 ),
+		    'alignment' =>  array(
+		        'horizontal'=> PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+		        'vertical'  => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+		        'wrap'      => TRUE
+		    )
+		);
+	global $cnx;   
+	$cam_cod = $_SESSION['idcampana'];
+	$titulosColumnas = array('REGION', 'RETAIL', 'TIENDA', 'CAMPAÑA',"INICIO","FIN","AREA","CRITERIO");
+	$objPHPExcel->getActiveSheet()->setTitle('Resultados Campaña');
+	$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B3',  $titulosColumnas[0])->setCellValue('C3',  $titulosColumnas[1])->setCellValue('D3',  $titulosColumnas[2])
+	    ->setCellValue('E3',  $titulosColumnas[3])->setCellValue('F3',  $titulosColumnas[4])->setCellValue('G3',  $titulosColumnas[5])->setCellValue('H3',  $titulosColumnas[6])
+	    ->setCellValue('I3',  $titulosColumnas[7]);
+	    $objPHPExcel->getActiveSheet()->getStyle('B3:I3')->applyFromArray($estiloTituloColumnas);
+	$qy = "SELECT area.are_cod,are_nom from evaluacion
+			inner join eva_tie on evaluacion.eva_cod = eva_tie.eva_cod
+			inner join campana on campana.cam_cod = evaluacion.cam_cod
+			inner join deteval on deteval.evatie_cod = eva_tie.evatie_cod
+			inner join area on area.are_cod = deteval.are_cod
+			where campana.cam_cod = '$cam_cod' and deteval.deteval_est = 'A' and eva_tie.evatie_est = 'A' and evaluacion.eva_est='A'
+			group by area.are_cod order by are_nom";
+	$qr=$cnx->query($qy);
+ 	$nrt=$qr->num_rows;
+ 	$areas = array();
+ 	for ($k=0; $k <$nrt; $k++) { 
+ 		$reg=$qr->fetch_object();
+ 		$areas[$k][0] = $reg->are_cod;
+ 		$areas[$k][1] = $reg->are_nom;
+ 		$areas[$k][2] = 0;
+ 		$areas[$k][3] = "";
+ 		$areas[$k][4] = "";
+ 		$areas[$k][5] = "";
+ 		$areas[$k][6] = 0;//NO CAMBIA
+ 		$areas[$k][7] = 0;
+ 	}
+	$qy = "SELECT ret_nom,reg_nom,zon_nom,ent_nom,entidad.ent_cod,cam_nom,cam_fec_ini,cam_fec_fin from campana 
+			inner join cam_ent on campana.cam_cod = cam_ent.cam_cod
+			inner join entidad on entidad.ent_cod = cam_ent.ent_cod
+			inner join retail on retail.ret_cod = entidad.ret_cod
+			inner join region on region.reg_cod = entidad.reg_cod
+			inner join zona on zona.zon_cod = entidad.zon_cod
+			where campana.cam_cod = '$cam_cod' and cti_est='A'
+			order by entidad.ent_cod";
+	$qr=$cnx->query($qy);
+ 	$nrt=$qr->num_rows;
+ 	$letras = array("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","AB","AC");//26
+ 	$index = 4;
+ 	$ini = 4;
+ 	$cantidad = array();
+ 	for ($i=0; $i <$nrt; $i++) { 
+ 		$reg=$qr->fetch_object();
+ 		$criterios = array();
+ 		$sql6 = "SELECT deteval.deteval_cod,criterio.cri_cod,cri_nom,deteval.are_cod from eva_tie
+					inner join deteval on eva_tie.evatie_cod = deteval.evatie_cod
+					inner join detcri on detcri.deteval_cod = deteval.deteval_cod
+					inner join criterio on criterio.cri_cod = detcri.cri_cod
+					inner join (select eva_cod from evaluacion where cam_cod = '$cam_cod' AND evaluacion.eva_est='A') as x on x.eva_cod = detcri.eva_cod 
+					where eva_tie.ent_cod = '$reg->ent_cod' and eva_tie.evatie_est = 'A' and deteval.deteval_est = 'A' and criterio.cri_est = 'A' and detcri.detcri_est='A' group by criterio.cri_cod";
+		$re6=$cnx->query($sql6);
+		$num6=$re6->num_rows;
+	 	for ($p=0; $p <$num6; $p++) { 
+	 		$reg6=$re6->fetch_object();
+	 		$criterios[$p][0] = $reg6->cri_cod;
+	 		$criterios[$p][1] = 0;
+	 		$criterios[$p][2] = 0;
+	 		$criterios[$p][3] = 0;
+	 		$criterios[$p][4] = 0;
+	 		$criterios[$p][5] = $reg6->are_cod;
+	 		$criterios[$p][6] = 0;
+	 	}
+	 	$cantidad[] = count($criterios);
+		$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B'.$index,$reg->reg_nom)  //Titulo de las columnas
+	    ->setCellValue('C'.$index,$reg->ret_nom)
+	    ->setCellValue('D'.$index,$reg->ent_nom)
+	    ->setCellValue('E'.$index,$reg->cam_nom)
+	    ->setCellValue('F'.$index,$reg->cam_fec_ini)
+	    ->setCellValue('G'.$index,$reg->cam_fec_fin)
+	    ->setCellValue('H'.$index,"TOTAL")
+	    ->setCellValue('I'.$index,"TOTAL");
+		$objPHPExcel->getActiveSheet()->getStyle("B".$index.":I".$index)->applyFromArray($estilotiendas);
+	    $index++;
+	 	for ($n=0; $n <count($areas); $n++) { 
+			$objPHPExcel->setActiveSheetIndex(0)->setCellValue('H'.$index,$areas[$n][1]);
+			$sql3 = "SELECT criterio.cri_cod,cri_nom from eva_tie
+					inner join deteval on eva_tie.evatie_cod = deteval.evatie_cod
+					inner join detcri on detcri.deteval_cod = deteval.deteval_cod
+					inner join criterio on criterio.cri_cod = detcri.cri_cod
+					inner join (select eva_cod from evaluacion where cam_cod = '$cam_cod') as x on x.eva_cod = detcri.eva_cod 
+					where eva_tie.ent_cod = '$reg->ent_cod' and eva_tie.evatie_est = 'A' and deteval.deteval_est = 'A' and criterio.cri_est = 'A' and deteval.are_cod = '".$areas[$n][0]."'
+					group by criterio.cri_cod";
+					$index++;
+			$re3=$cnx->query($sql3);
+ 			$num3=$re3->num_rows;
+ 			if($num3!='0'){
+	 			for ($r=0; $r <$num3; $r++) { 
+	 				$reg3=$re3->fetch_object();
+	 				$objPHPExcel->setActiveSheetIndex(0)->setCellValue('I'.$index,$reg3->cri_nom);
+	 				$index++;
+	 			}
+ 			}
+	 	}
+	    $sql1 = "SELECT eva_cod,eva_num from evaluacion 
+					where cam_cod = '$cam_cod' and eva_est='A' order by eva_num asc";
+		$re1=$cnx->query($sql1);
+	 	$num1=$re1->num_rows;
+	 	$numlet = 9;
+	 	$total = 0;
+	 	for ($j=0; $j <$num1; $j++) { 
+	 		$ind = $i*count($areas) + 4 + $i;
+	 		for ($a=0; $a <count($cantidad)-1; $a++) { 
+	 			$ind+=$cantidad[$a];
+	 		}
+	 		$reg1=$re1->fetch_object();
+			$objPHPExcel->setActiveSheetIndex(0)
+			    ->setCellValue($letras[$numlet]."3","PARTICIPACION")  //Titulo de las columnas
+			    ->setCellValue($letras[$numlet+1]."3","PESO")
+			    ->setCellValue($letras[$numlet+2]."3","PUNTAJE")
+			    ->setCellValue($letras[$numlet+3]."3","%");
+		 		$objPHPExcel->setActiveSheetIndex(0)->mergeCells($letras[$numlet]."2:".$letras[$numlet+3]."2");
+				$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet]."2","EVALUACION ".$reg1->eva_num);
+			    if($reg1->eva_num=='1'){
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."3:".$letras[$numlet+3]."3")->applyFromArray($evaluacion1);
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."2:".$letras[$numlet+3]."2")->applyFromArray($evaluacion1);
+			    }elseif($reg1->eva_num=='2'){
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."3:".$letras[$numlet+3]."3")->applyFromArray($evaluacion2);
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."2:".$letras[$numlet+3]."2")->applyFromArray($evaluacion2);
+			    }elseif($reg1->eva_num=='3'){
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."3:".$letras[$numlet+3]."3")->applyFromArray($evaluacion3);
+			    	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."2:".$letras[$numlet+3]."2")->applyFromArray($evaluacion3);
+			    }
+			    $sql2 = "SELECT deteval.deteval_cod,are_nom,area.are_cod,deteval.participacion,ROUND((deteval.participacion*buenas)/100) as puntaje,buenas from eva_tie 
+							inner join deteval on eva_tie.evatie_cod = deteval.evatie_cod
+							inner join area on area.are_cod = deteval.are_cod
+							where ent_cod = '$reg->ent_cod' and eva_tie.eva_cod = '$reg1->eva_cod' and deteval_est = 'A' and eva_tie.evatie_est = 'A' order by are_nom";
+				$re2=$cnx->query($sql2);
+			 	$num2=$re2->num_rows;
+				$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ind,"100%")->setCellValue($letras[$numlet+1].$ind,"100");
+				$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet].$ind.":".$letras[$numlet+1].$ind)->applyFromArray($estilotiendas);
+				for ($m=0; $m<$num2 ; $m++) { 
+					$reg2=$re2->fetch_object();
+					for ($c=0; $c <count($areas); $c++) { 
+						if($reg2->are_cod==$areas[$c][0]){
+							$areas[$c][2] = 1;
+							$areas[$c][3] = $reg2->participacion;
+							$areas[$c][4] = $reg2->puntaje;
+							$areas[$c][5] = $reg2->buenas;
+							$areas[$c][6] = $areas[$c][6]+$reg2->puntaje;
+							$areas[$c][7] = $reg2->deteval_cod;
+							$c=count($areas)+1;
+						}
+					}
+				}
+				$ind++;
+				$puntaje = 0;
+				for ($v=0; $v <count($areas); $v++){ 
+					if($areas[$v][2]==1){
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ind,$areas[$v][3]."%");
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ind,$areas[$v][3]);
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+2].$ind,$areas[$v][4]);
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+3].$ind,$areas[$v][5]."%");
+						$ind++;
+						$sql4="SELECT criterio.cri_cod,cri_nom,val_porc,bien,mal from detcri
+								inner join criterio on criterio.cri_cod = detcri.cri_cod
+								where detcri.detcri_est='A' AND deteval_cod = '".$areas[$v][7]."'";
+						$re4=$cnx->query($sql4);
+			 			$num4=$re4->num_rows;
+			 			if($num4!='0'){
+				 			for ($r=0; $r <$num4; $r++) { 
+				 				$reg4=$re4->fetch_object();
+								for ($y=0; $y <count($criterios); $y++) { 
+									if($reg4->cri_cod==$criterios[$y][0]){
+										$criterios[$y][1] = 1;
+										$criterios[$y][2] = $reg4->val_porc;
+										$criterios[$y][3] = $reg4->bien;
+										$criterios[$y][4] = $reg4->mal;
+										$criterios[$y][6] = $criterios[$y][6]+$reg4->val_porc;
+										$y=count($criterios)+1;
+									}
+								}
+				 			}
+			 			}
+			 			for ($o=0; $o <count($criterios); $o++) { 
+			 				if($criterios[$o][1]==1){
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ind,"");
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ind,"");
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+2].$ind,($criterios[$o][3]=='1'?$criterios[$o][2]:"0"));
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+3].$ind,"");
+				 				$ind++;
+								$criterios[$o][1] = 0;
+								$criterios[$o][2] = 0;
+								$criterios[$o][3] = 0;
+								$criterios[$o][4] = 0;
+			 				}
+			 			}
+						$puntaje+=$areas[$v][4];
+						$areas[$v][2] = 0;
+						$areas[$v][3] = "";
+						$areas[$v][4] = "";
+						$areas[$v][5] = "";
+						$areas[$v][7] = 0;
+					}elseif($areas[$v][2]==0){
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ind,'0%');
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ind,'0');
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+2].$ind,'0');
+						$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+3].$ind,'0%');
+						$ind++;
+
+						for ($z=0; $z <count($criterios); $z++) { 
+							if($areas[$v][0]==$criterios[$z][5]){
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ind,'');
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ind,'');
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+2].$ind,'0');
+								$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+3].$ind,'');
+								$ind++;
+							}
+						}
+
+
+					}
+				}
+				$total+=$puntaje;
+				$indice = $ind - count($areas)-count($criterios)-1;
+				$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+2].$indice,$puntaje)->setCellValue($letras[$numlet+3].$indice,$puntaje."%");
+				$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet+2].$indice.":".$letras[$numlet+3].$indice)->applyFromArray($estilotiendas);
+			 	$numlet = $numlet+4;
+	 	}
+	 	if($num1=='0'){$num1=1;}
+	 	$total=$total/$num1;
+	 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet]."3","PROMEDIO TT")->setCellValue($letras[$numlet+1]."3","%");
+	 	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet]."3:".$letras[$numlet+1]."3")->applyFromArray($estiloTituloColumnas);
+	 	$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ini,$total)->setCellValue($letras[$numlet+1].$ini,$total."%");
+	 	$objPHPExcel->getActiveSheet()->getStyle($letras[$numlet].$ini.":".$letras[$numlet+1].$ini)->applyFromArray($estiloTituloColumnas);
+	 	$ini++;
+	 	for ($b=0; $b <count($areas); $b++) { 
+	 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ini,$areas[$b][6]/$num1);
+	 		$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ini,($areas[$b][6]/$num1)."%");
+	 		$objPHPExcel->getActiveSheet()->getStyle("H".$ini.":".$letras[$numlet+1].$ini)->applyFromArray($estiloareas);
+	 		$ini++;
+	 		for ($l=0; $l <count($criterios); $l++) { 
+				if($areas[$b][0]==$criterios[$l][5]){
+					$valor = 0;
+					$posi = 9;
+					for ($e=0; $e <$num1 ; $e++) { 
+						$valor+=$objPHPExcel->getActiveSheet()->getCell($letras[$posi+2].$ini)->getValue(); 
+						$posi=$posi+4;
+					}
+
+					$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet].$ini,$valor/$num1);
+					$objPHPExcel->setActiveSheetIndex(0)->setCellValue($letras[$numlet+1].$ini,'');
+					$criterios[$l][6] = 0;
+					$ini++;
+				}
+	 		}
+	 		$areas[$b][6] = 0;
+	 	}
+ 	}
+ 	$objPHPExcel->setActiveSheetIndex(0)->mergeCells("B1:".$letras[$numlet+1]."1");
+	$objPHPExcel->setActiveSheetIndex(0)->setCellValue('B1',"REPORTE DE EVALUACION FDE");
+	$objPHPExcel->getActiveSheet()->getStyle("B1:".$letras[$numlet+1]."1")->applyFromArray($estiloTituloColumnas);
+ 	$objPHPExcel->getActiveSheet()->getStyle('E14')->getAlignment()->setWrapText(true);
+ 	for ($x=0; $x <count($letras); $x++) { 
+ 		$objPHPExcel->setActiveSheetIndex(0)->getColumnDimension($letras[$x])->setAutoSize(true);
+
+ 	}
+	header('Content-Type: application/vnd.ms-excel');
+	header('Content-Disposition: attachment;filename="reporte.xls"');
+	header('Cache-Control: max-age=0');
+	// If you're serving to IE 9, then the following may be needed
+	header('Cache-Control: max-age=1');
+	// If you're serving to IE over SSL, then the following may be needed
+	header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+	header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+	header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+	header ('Pragma: public'); // HTTP/1.0
+
+	$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+	$objWriter->save('php://output');
+	exit();
+?>
