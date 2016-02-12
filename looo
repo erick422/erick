@@ -1,0 +1,665 @@
+<?php
+  ob_start("ob_gzhandler");
+  session_start();
+  if(isset($_SESSION['usu'])){
+    include ("logica/log_con_campana.php");
+  }else{header('Location: index.php');}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>GEMA</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta content="" name="description"/>
+<meta content="" name="author"/>
+<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/uniform/css/uniform.default.css" rel="stylesheet" type="text/css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/bootstrap-toastr/toastr.min.css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/select2/select2.css"/>
+<link href="assets/global/plugins/fancybox/source/jquery.fancybox.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/bootstrap-fileinput/bootstrap-fileinput.css" rel="stylesheet" type="text/css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/datatables/extensions/Scroller/css/dataTables.scroller.min.css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/datatables/extensions/ColReorder/css/dataTables.colReorder.min.css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.css"/>
+<link href="assets/global/css/components.css" id="style_components" rel="stylesheet" type="text/css"/>
+<link href="assets/global/css/plugins.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/layout.css" rel="stylesheet" type="text/css"/>
+<link id="style_color" href="assets/admin/layout/css/themes/darkblue.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/custom.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/themes/light2.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="js/jquery-2.2.0.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+<script type="text/javascript" src="js/ajax/core.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="js/script.js"></script>  
+<script type="text/javascript" src="js/ajax/con_campana.js"></script>  
+<!-- END THEME STYLES -->
+<link rel="shortcut icon" href="favicon.ico"/>
+<style type="text/css">
+
+@media screen and (min-width: 768px){
+  #divTienda .modal-dialog  {width:900px;}
+}
+#divTienda .modal-dialog {
+  width:75%;
+}
+@media screen and (min-width: 768px){
+  #divObser .modal-dialog  {width:800px;}
+}
+#divObser .modal-dialog {
+  width:65%;
+}
+</style> 
+</head>
+<body>
+<div class="page-container">
+  <!--div class="page-content-wrapper"-->
+    <div class="page-content">
+      <div class="row">
+        <div class="col-md-12">
+          <form class="form-horizontal form-row-seperated" action="#">
+            <div class="portlet box blue">
+              <div class="portlet-title">
+                <div class="caption" id="TituloCampana">
+                  
+                </div>
+                <div class="actions">
+                  <a href="javascript:;" class="btn btn-default btn-sm" onclick="javascript:window.close();"><i class="fa fa-times"></i> Salir</a>
+                </div>
+              </div>
+              <div class="portlet-body">
+                <div class="tabbable">
+                  <ul class="nav nav-pills">
+                    <li class="active">
+                      <a href="#tab_material" onclick="xajax_lis_mat(window.top.location.search);" data-toggle="tab">
+                      Ver Materiales </a>
+                    </li>
+                    <li>
+                      <a href="#tab_tienda" onclick="xajax_lis_tie(window.top.location.search);" data-toggle="tab">
+                      Ver Tiendas </a>
+                    </li>
+                    <li>
+                      <a href="#tab_mat_tie" onclick="xajax_lis_dis(window.top.location.search);" data-toggle="tab">
+                      Distribuir Material - Tienda </a>
+                    </li>
+                    <li>
+                      <a href="#tab_archivo" onclick="xajax_lis_adj(window.top.location.search);" data-toggle="tab">
+                      Adjuntar Archivo </a>
+                    </li>
+                  </ul>
+                  <div class="tab-content no-space">
+                    <div class="tab-pane fade active in" id="tab_material">
+                        <div class="row">
+                          <div class="col-md-12">
+                            <div class="portlet grey-cascade box">
+                              <div class="portlet-title">
+                                <div class="caption">
+                                  <i class="fa fa-cogs"></i>Listado de Materiales
+                                </div>
+                                <div class="actions" id="btnMaterial">
+                                </div>
+                              </div>
+                              <div class="portlet-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="listMaterial">
+                                    </table>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab_tienda">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="portlet grey-cascade box">
+                            <div class="portlet-title">
+                              <div class="caption">
+                                <i class="fa fa-cogs"></i>Listado de Tiendas
+                              </div>
+                              <div class="actions" id="btnTienda">
+                              </div>
+                            </div>
+                            <div class="portlet-body">
+                              <div class="table-responsive">
+                                  <table class="table table-bordered table-hover" id="listTienda">
+                                  </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab_mat_tie">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="portlet grey-cascade box">
+                            <div class="portlet-title">
+                              <div class="caption">
+                                <i class="fa fa-cogs"></i>Material - Tienda
+                              </div>
+                              <div class="actions" id="btnTienda">
+                              </div>
+                            </div>
+                            <div class="portlet-body">
+                              <div class="table-responsive table-scrollable">
+                                  <table class="table table-bordered table-hover" id="listMatTie" style="overflow: auto;">
+                                  </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab_archivo">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="portlet grey-cascade box">
+                            <div class="portlet-title">
+                              <div class="caption">
+                                <i class="fa fa-cogs"></i>Archivos
+                              </div>
+                              <div class="actions" id="btnArchivo">
+                              </div>
+                            </div>
+                            <div class="portlet-body">
+                              <div class="table-responsive">
+                                  <table class="table table-bordered table-hover" id="listArchivos">
+                                  </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    <!--/div-->
+  </div>
+
+
+  <div id="divMaterial" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+          <h4 class="modal-title" id="titulo">NUEVO MATERIAL</h4>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal" role="form" name="regMaterial" id="regMaterial" method="post" onsubmit="return false;" enctype="multipart/form-data">
+                <input type='hidden' name='mat_cod' id='mat_cod'/>
+                <input type='hidden' name='mat_acc' id='mat_acc'/>
+                <div class="form-group">
+                  <label class="control-label col-md-3">Tipo Material</label>
+                  <div class="col-md-6">
+                    <div class="input-group">
+                      <span class="input-group-addon">
+                      <i class="fa fa-user"></i>
+                      </span>
+                      <select class="form-control select2me" data-placeholder="Select..." name="tip" id="tip">
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">Descripcion</label>
+                  <div class="col-md-6">
+                    <div class="input-icon">
+                      <i class="fa fa-bell-o"></i>
+                      <input type="text" class="form-control" placeholder="Descripcion" name="nue_det" id="nue_det" value="" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">Cantidad</label>
+                  <div class="col-md-3">
+                    <div class="input-icon">
+                      <i class="fa fa-bell-o"></i>
+                      <input type="text" class="form-control" name="nue_can" id="nue_can" value="" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    </div>
+                  </div>
+                </div>
+            </form>
+            <form method="post" name="frmImagen" id="frmImagen" enctype="multipart/form-data" class="form-horizontal">
+              <div class="form-group">
+                 <label class="col-md-3 control-label">Imagen 1</label>
+                 <div class="col-md-6">
+                      <div id="cam1" class="fileinput fileinput-new" data-provides="fileinput">
+                        <div class="fileinput-new thumbnail" style="width: 100px; height: 60px;">
+                          <img src="http://www.placehold.it/200x150/EFEFEF/AAAAAA&amp;text=no+image" alt="">
+                        </div>
+                        <div id="foto1" class="fileinput-preview fileinput-exists thumbnail" style="max-width: 200px; max-height: 150px; line-height: 10px;">
+                        </div>
+                        <div>
+                          <span class="btn default btn-file">
+                          <span class="fileinput-new">
+                          Subir Imagen </span>
+                          <span class="fileinput-exists">
+                          Cambiar </span>
+                          <input type="hidden" name="img1" id="img1" value=""/>
+                          <input type="hidden" name="img1_copia" id="img1_copia" value=""/>
+                          <input type="file" name="imagen1" id="imagen1"/>
+                          </span>
+                          <a href="javascript:;" class="btn default fileinput-exists" data-dismiss="fileinput" onclick="Borrar('1');">
+                          Quitar </a>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="form-group">
+                 <label class="col-md-3 control-label">Imagen 2</label>
+                 <div class="col-md-6">
+                      <div id="cam2" class="fileinput fileinput-new" data-provides="fileinput">
+                        <div class="fileinput-new thumbnail" style="width: 100px; height: 60px;">
+                          <img src="http://www.placehold.it/200x150/EFEFEF/AAAAAA&amp;text=no+image" alt="">
+                        </div>
+                        <div id="foto2" class="fileinput-preview fileinput-exists thumbnail" style="max-width: 200px; max-height: 150px; line-height: 10px;">
+                        </div>
+                        <div>
+                          <span class="btn default btn-file">
+                          <span class="fileinput-new">
+                          Subir Imagen </span>
+                          <span class="fileinput-exists">
+                          Cambiar </span>
+                          <input type="hidden" name="img2" id="img2" value=""/>
+                          <input type="hidden" name="img2_copia" id="img2_copia" value=""/>
+                          <input type="file" name="imagen2" id="imagen2"/>
+                          </span>
+                          <a href="javascript:;" class="btn default fileinput-exists" data-dismiss="fileinput" onclick="Borrar('2');">
+                          Quitar </a>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="form-group">
+                 <label class="col-md-3 control-label">Imagen 3</label>
+                 <div class="col-md-6">
+                      <div id="cam3" class="fileinput fileinput-new" data-provides="fileinput">
+                        <div class="fileinput-new thumbnail" style="width: 100px; height: 60px;">
+                          <img src="http://www.placehold.it/200x150/EFEFEF/AAAAAA&amp;text=no+image" alt="">
+                        </div>
+                        <div id="foto3" class="fileinput-preview fileinput-exists thumbnail" style="max-width: 200px; max-height: 150px; line-height: 10px;">
+                        </div>
+                        <div>
+                          <span class="btn default btn-file">
+                          <span class="fileinput-new">
+                          Subir Imagen </span>
+                          <span class="fileinput-exists">
+                          Cambiar </span>
+                          <input type="hidden" name="img3" id="img3" value=""/>
+                          <input type="hidden" name="img3_copia" id="img3_copia" value=""/>
+                          <input type="file" name="imagen3" id="imagen3"/>
+                          </span>
+                          <a href="javascript:;" class="btn default fileinput-exists" data-dismiss="fileinput" onclick="Borrar('3');">
+                          Quitar </a>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="form-group">
+                 <label class="col-md-3 control-label">Imagen 4</label>
+                 <div class="col-md-6">
+                      <div id="cam4" class="fileinput fileinput-new" data-provides="fileinput">
+                        <div class="fileinput-new thumbnail" style="width: 100px; height: 60px;">
+                          <img src="http://www.placehold.it/200x150/EFEFEF/AAAAAA&amp;text=no+image" alt="">
+                        </div>
+                        <div id="foto4" class="fileinput-preview fileinput-exists thumbnail" style="max-width: 200px; max-height: 150px; line-height: 10px;">
+                        </div>
+                        <div>
+                          <span class="btn default btn-file">
+                          <span class="fileinput-new">
+                          Subir Imagen </span>
+                          <span class="fileinput-exists">
+                          Cambiar </span>
+                          <input type="hidden" name="img4" id="img4" value=""/>
+                          <input type="hidden" name="img4_copia" id="img4_copia" value=""/>
+                          <input type="file" name="imagen4" id="imagen4"/>
+                          </span>
+                          <a href="javascript:;" class="btn default fileinput-exists" data-dismiss="fileinput" onclick="Borrar('4');">
+                          Quitar </a>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn red" data-dismiss="modal" aria-hidden="true">Cancelar</button>
+          <button class="btn blue" onclick="val_mat();">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="msndel" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" name="frmEli" id="frmEli"> <input type="hidden" name="codeli" id="codeli" value="0"/>
+          <input type="hidden" name="codtip" id="codtip" value="0"/></form>
+          <div class="modal-body">
+            <p id="contenido">
+               Esta Seguro que desea Eliminar La Tienda?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" data-dismiss="modal" class="btn red">Cancelar</button>
+            <button type="button" class="btn blue" onclick="Eliminar();">Continuar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="eliTienda" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" name="frmEliTie" id="frmEliTie">
+          <input type="hidden" name="codelitie" id="codelitie" value="0"/></form>
+          <input type="hidden" name="codt" id="codt" value="0"/></form>
+          <div class="modal-body">
+            <p id="contenido">
+               ¿Esta seguro que desea eliminar la Tienda?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" data-dismiss="modal" class="btn red">No</button>
+            <button type="button" class="btn blue" onclick="eli_tie();">Si</button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confMat" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" name="frmEliminar" id="frmEliminar">
+          <input type="hidden" name="codeliminar" id="codeliminar" value="0"/><input type="hidden" name="tipoeliminado" id="tipoeliminado" value="0"/></form>
+          <div class="modal-body">
+            <p id="contenidoE"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" data-dismiss="modal" class="btn red">No</button>
+            <button type="button" class="btn blue" onclick="elimat();">Si</button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="divTienda" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+            <h4 class="modal-title" id="titulo">Seleccionar Tienda</h4>
+          </div>
+          <div class="modal-body">
+              <form class="form-inline" role="form" name="frmBusTienda" id="frmBusTienda" method="post" onsubmit="return false;">
+                <input type='hidden' name='can_tie' id='can_tie'/>
+                <div class="form-group" style="vertical-align: bottom;">
+                  <label style="vertical-align: bottom;">Ver Tienda
+                  </label>
+                </div>
+                <div class="form-group" style="vertical-align: bottom;">
+                  <select class="form-control" style="vertical-align: bottom;" name="campo" id="campo">
+                    <option value="ent_nom">Nombre</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <div class="input-group input-medium">
+                    <input type="text" class="form-control" name="valor" id="valor" size='50' placeholder='Buscar' onkeydown='texcon_tienda();' onkeypress="bloqueo(event,'L');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    <span class="input-group-btn">
+                    <button class="btn blue" type="button" name="btnBuscar" id="btnBuscar" onclick="buscar_text_tienda();">Buscar</button>
+                    </span>
+                  </div>
+                </div>
+              </form>
+              <hr>
+              <form class="form-horizontal" role="form" name="frmTiendas" id="frmTiendas" method="post" onsubmit="return false;">
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-bordered table-striped table-condensed flip-content" id="listiendas">
+                  </table>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn red" data-dismiss="modal" aria-hidden="true">Salir</button>
+            <button class="btn blue" onclick="validar_tiendas();">Agregar</button>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="divObser" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+            <h4 class="modal-title" id="tituloObser">Listado de Observaciones</h4>
+          </div>
+          <div class="modal-body">
+              <form class="form-horizontal" role="form" name="frmObserva" id="frmObserva" method="post" onsubmit="return false;">
+                <input type='hidden' name='met_cod_uno' id='met_cod_uno'/>
+                <div class="row">
+                  <div class="col-md-12">
+                    <table class="table table-bordered table-striped table-condensed flip-content" id="lisobservaciones">
+                    </table>
+                  </div>
+                </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn red" data-dismiss="modal" aria-hidden="true">Salir</button>
+            <button class="btn blue" onclick="agregar_comentario();">Agregar Comentario</button>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="regObser" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+          <h4 class="modal-title" id="tituloRegObser">NUEVO OBSERVACION</h4>
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal" role="form" name="regObserva" id="regObserva" method="post" onsubmit="return false;">
+            <input type='hidden' name='met_cod_obs' id='met_cod_obs'/>
+            <input type='hidden' name='met_acc_obs' id='met_acc_obs'/>
+            <input type='hidden' name='met_cod_dos' id='met_cod_dos'/>
+            <div class="form-group">
+              <label class="col-md-3 control-label">Descripcion</label>
+              <div class="col-md-6">
+                <textarea class="form-control input-circle" rows="3" style="margin: 0px -4.75px 0px 0px; height: 74px; width: 365px;" name='obs_des' id='obs_des'></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn red" data-dismiss="modal" aria-hidden="true">Cancelar</button>
+          <button class="btn blue" onclick="GuardarObservacion();">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="divFotos" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+            <h4 class="modal-title" id="tituloFotos">Listado de Fotos</h4>
+          </div>
+          <div class="modal-body">
+              <form class="form-horizontal" role="form" name="frmFotos" id="frmFotos" method="post" onsubmit="return false;">
+                <div class="row">
+                  <div class="col-md-12">
+                    <table class="table table-bordered table-striped table-condensed flip-content" id="lisfotos">
+                    </table>
+                  </div>
+                </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn red" data-dismiss="modal" aria-hidden="true">Salir</button>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="divArchivo" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+          <h4 class="modal-title" id="tituloArchivo">NUEVO ARCHIVO</h4>
+        </div>
+        <div class="modal-body">
+          <form method="post" class="form-horizontal" role="form" name="Archivo1" id="Archivo1" onsubmit="return false;" enctype="multipart/form-data">
+            <input type='hidden' name='adj_cod' id='adj_cod'/>
+            <input type='hidden' name='adj_acc' id='adj_acc'/>
+            <div class="form-group">
+              <label class="col-md-3 control-label">Descripcion</label>
+              <div class="col-md-6">
+                <div class="input-icon">
+                  <i class="fa fa-bell-o"></i>
+                  <input type="text" class="form-control" placeholder="Descripcion" name="adj_nom" id="adj_nom" value="" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">Archivo</label>
+                <div class="col-md-6">
+                  <div id="cambio" class="fileinput fileinput-new" data-provides="fileinput"><!-- CAMBIAR A fileinput-exists-->
+                        <div class="input-group input-large">
+                          <div class="form-control uneditable-input input-fixed input-medium" data-trigger="fileinput">
+                            <i class="fa fa-file fileinput-exists"></i>&nbsp; <span class="fileinput-filename" id="nombre1"></span>
+                          </div>
+                          <span class="input-group-addon btn default btn-file">
+                          <span class="fileinput-new">
+                          Seleccionar </span>
+                          <span class="fileinput-exists">
+                          Cambiar </span>
+                          <input type="file" name="uploadfile" id="uploadfile">
+                          <input type="hidden" name="nomarc1" id="nomarc1" value="">
+                          <input type="hidden" name="nomarc1_copia" id="nomarc1_copia" value="">
+                          </span>
+                          <a href="javascript:;" class="input-group-addon btn red fileinput-exists" data-dismiss="fileinput" onclick="Remover();">
+                          Eliminar</a>
+                        </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-3"></div>
+                <div class="col-md-7">
+                    <div class="progress progress-striped active">
+                    <div class="progress-bar"  role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                      <span class="sr-only">0% Complete</span>
+                      <input type="hidden" name="pr" id="pr" value="0"/>
+                    </div>
+                    </div>
+                </div>
+              </div>
+           </form>
+           <div id="texto"></div>
+        
+        </div>
+        <div class="modal-footer">
+          <button class="btn red" data-dismiss="modal" aria-hidden="true">Cancelar</button>
+          <button class="btn blue" name="guardar" onclick="validar_archivo();">Guardar</button>
+        </div>
+      </div>
+     
+    </div>
+  </div>
+
+  <a href="javascript:;" class="page-quick-sidebar-toggler"><i class="icon-close"></i></a>
+</div>
+
+<div class="page-footer">
+  <div class="page-footer-inner">
+     2016 &copy; Sisnup - GEMA
+  </div>
+  <div class="scroll-to-top">
+    <i class="icon-arrow-up"></i>
+  </div>
+</div>
+<script src="assets/global/plugins/jquery.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery-migrate.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery.blockui.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/uniform/jquery.uniform.min.js" type="text/javascript"></script>
+<!-- NUEVOS-->
+<script type="text/javascript" src="assets/global/plugins/bootstrap-toastr/toastr.min.js"></script>
+<script type="text/javascript" src="assets/global/plugins/fancybox/source/jquery.fancybox.js"></script>
+<script type="text/javascript" src="assets/admin/pages/scripts/components-dropdowns.js"></script>
+<script type="text/javascript" src="assets/global/plugins/bootstrap-fileinput/bootstrap-fileinput.js"></script>
+<script type="text/javascript" src="assets/global/plugins/select2/select2.min.js"></script>
+<script type="text/javascript" src="assets/global/plugins/datatables/media/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js"></script>
+<script type="text/javascript" src="assets/global/plugins/fancybox/source/jquery.fancybox.pack.js"></script>
+<!-- BEGIN PAGE LEVEL SCRIPTS -->
+<script src="assets/global/scripts/metronic.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/layout.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/quick-sidebar.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/demo.js" type="text/javascript"></script>
+<script src="assets/global/scripts/datatable.js" type="text/javascript"></script>
+<script>
+  jQuery(document).ready(function(){       
+    Metronic.init(); // init metronic core components
+    Layout.init(); // init current layout
+    QuickSidebar.init(); // init quick sidebar
+    Demo.init(); // init demo feature
+    $("a.fancybox-button").fancybox();
+    toastr.options = {
+      "priority": 'error',
+      "closeButton": true,
+      "debug": false,
+      "positionClass": "toast-bottom-right",
+      "onclick": null,
+      "showDuration": "1000",
+      "hideDuration": "1000",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    }
+    toastr.options = {
+      "priority": 'success',
+      "closeButton": true,
+      "debug": false,
+      "positionClass": "toast-bottom-right",
+      "onclick": null,
+      "showDuration": "1000",
+      "hideDuration": "1000",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    }
+  });
+</script>
+<!-- END JAVASCRIPTS -->
+</body>
+<!-- END BODY -->
+</html>
