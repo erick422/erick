@@ -1,0 +1,32 @@
+<?php
+	//PARA UN ARCHIVO
+	session_start();
+	$uploaddir = './uploads/'; 
+	$cant = count($_FILES);
+	$nom_aud= utf8_decode($_FILES['uploadfile']['name']);
+	$file = $uploaddir.$nom_aud; 
+	$size=$_FILES['uploadfile']['size'];
+	$tipos = array("pdf");
+	$temp = explode(".", $_FILES["uploadfile"]["name"]);
+	$extension = end($temp);
+
+	if($cant <1){
+		$flots = array("exito"=>"0","mensaje"=>"No Existen Archivos que guardar");//10048576
+	}elseif($size>20097152){
+		unlink($_FILES['uploadfile']['tmp_name']);
+		$flots = array("exito"=>"0","mensaje"=>"Error tamaño de Archivo > 10 MB");
+	}elseif( ( ($_FILES["uploadfile"]["type"] == "application/pdf") /*|| ($_FILES["file"]["type"] == "image/jpeg")*/ ) && in_array($extension, $tipos)) {
+	  if ($_FILES["uploadfile"]["error"] > 0){
+	    	$flots = array("exito"=>"0","mensaje"=>$_FILES["uploadfile"]["error"]);
+	  }else{
+			if(move_uploaded_file($_FILES['uploadfile']['tmp_name'],$file)){
+			  	$flots = array("exito"=>"1");
+			}else{
+				$flots = array("exito"=>"0","mensaje"=>"Error :".$_FILES['uploadfile']['error']." --- ".$_FILES['uploadfile']['tmp_name']." %%% ".$file."($size)");
+			}
+	  }
+	}else{
+		$flots = array("exito"=>"0","mensaje"=>"Tipo de Archivo Incorrecto");
+	}
+	echo json_encode($flots);
+?>
