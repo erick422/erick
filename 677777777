@@ -1,0 +1,399 @@
+$(function(){
+      try { if (undefined == xajax.config) xajax.config = {}; } catch (e) { xajax = {}; xajax.config = {}; };
+      xajax.config.requestURI = window.location.pathname;
+      xajax.config.statusMessages = false;
+      xajax.config.waitCursor = true;
+      xajax.config.version = "xajax 0.5";
+      xajax.config.legacy = false;
+      xajax.config.defaultMode = "asynchronous";
+      xajax.config.defaultMethod = "POST";
+
+      xajax_lis_mat = function() { return xajax.request( { xjxfun: 'lis_mat' }, { parameters: arguments } ); };
+      xajax_lis_tip = function() { return xajax.request( { xjxfun: 'lis_tip' }, { parameters: arguments } ); };
+      xajax_lis_tie = function() { return xajax.request( { xjxfun: 'lis_tie' }, { parameters: arguments } ); };
+      xajax_load_tie = function() { return xajax.request( { xjxfun: 'load_tie' }, { parameters: arguments } ); };
+      xajax_save_tie = function() { return xajax.request( { xjxfun: 'save_tie' }, { parameters: arguments } ); };
+      xajax_eli_tie = function() { return xajax.request( { xjxfun: 'eli_tie' }, { parameters: arguments } ); };
+      xajax_eli_mat = function() { return xajax.request( { xjxfun: 'eli_mat' }, { parameters: arguments } ); };
+      xajax_lis_dis = function() { return xajax.request( { xjxfun: 'lis_dis' }, { parameters: arguments } ); };
+      xajax_dat_obs = function() { return xajax.request( { xjxfun: 'dat_obs' }, { parameters: arguments } ); };
+      xajax_lis_fot = function() { return xajax.request( { xjxfun: 'lis_fot' }, { parameters: arguments } ); };
+      xajax_conf_met = function() { return xajax.request( { xjxfun: 'conf_met' }, { parameters: arguments } ); };
+      xajax_hab_met = function() { return xajax.request( { xjxfun: 'hab_met' }, { parameters: arguments } ); };
+
+      xajax_lis_rep = function() { return xajax.request( { xjxfun: 'lis_rep' }, { parameters: arguments } ); };
+      xajax_lis_adj = function() { return xajax.request( { xjxfun: 'lis_adj' }, { parameters: arguments } ); };
+      xajax_lis_obs = function() { return xajax.request( { xjxfun: 'lis_obs' }, { parameters: arguments } ); };
+      xajax_save_mat = function() { return xajax.request( { xjxfun: 'save_mat' }, { parameters: arguments } ); };
+      xajax_save_adj = function() { return xajax.request( { xjxfun: 'save_adj' }, { parameters: arguments } ); };
+      xajax_save_obs = function() { return xajax.request( { xjxfun: 'save_obs' }, { parameters: arguments } ); };
+      xajax_dat_mat = function() { return xajax.request( { xjxfun: 'dat_mat' }, { parameters: arguments } ); };
+      xajax_dat_adj = function() { return xajax.request( { xjxfun: 'dat_adj' }, { parameters: arguments } ); };
+      xajax_eli_adj = function() { return xajax.request( { xjxfun: 'eli_adj' }, { parameters: arguments } ); };
+      xajax_act_can = function() { return xajax.request( { xjxfun: 'act_can' }, { parameters: arguments } ); };
+      xajax_mod_mat = function() { return xajax.request( { xjxfun: 'mod_mat' }, { parameters: arguments } ); };
+      xajax_lis_mat(window.top.location.search);                                                                                           
+      xajax_lis_tip();//LISTAR TIENDAS EN MATERIAL REG.
+      xajax_lis_rep(window.top.location.search);
+});
+
+//Nuevos datos tienda
+function mat_nue(){ 
+  $('#select2-chosen-1').text('SELECCIONE TIPO');
+  $('#divMaterial').modal('show'); 
+  $('#titulo').text('NUEVO MATERIAL'); 
+  $('#regMaterial')[0].reset();
+  $("#img1").val('');$("#img2").val('');$("#img3").val('');$("#img4").val('');
+  $("#img1_copia").val('');$("#img2_copia").val('');$("#img3_copia").val('');$("#img4_copia").val('');
+  $('#mat_acc').attr('value', 'insertar');  
+  $("#cam1").removeClass("fileinput-exists").addClass("fileinput-new");
+  $("#cam2").removeClass("fileinput-exists").addClass("fileinput-new");
+  $("#cam3").removeClass("fileinput-exists").addClass("fileinput-new");
+  $("#cam4").removeClass("fileinput-exists").addClass("fileinput-new");
+}
+
+function conf_mat(cod){
+   $("#codeliminar").val(cod);
+   $("#tipoeliminado").val("T");
+   $("#contenidoE").text('¿Esta seguro que No llegara Material a esta Tienda?');
+   $("#confMat").modal("show");
+}
+
+function hab_mat(cod){
+   $("#codeliminar").val(cod);
+   $("#tipoeliminado").val("E");
+   $("#contenidoE").text('¿Esta seguro que desea habilitar la llegada de materiales a la tienda?');
+   $("#confMat").modal("show");
+}
+
+function elimat(){
+  var tipo = $("#tipoeliminado").val();
+  if(tipo==='T'){
+      xajax_conf_met($("#codeliminar").val(),window.top.location.search);
+  }else if(tipo==='E'){
+      xajax_hab_met($("#codeliminar").val(),window.top.location.search);
+  }
+}
+
+
+function tie_nue(){ 
+  $('#divTienda').modal('show'); 
+  xajax_load_tie(window.top.location.search,xajax.getFormValues('frmBusTienda')); 
+}
+
+function buscar_text_tienda(){
+  xajax_load_tie(window.top.location.search,xajax.getFormValues('frmBusTienda'));
+}
+
+function texcon_tienda() {
+  if ($('#frmBusTienda #valor').val().length == 3) { buscar_text_tienda(); }
+  if ($('#frmBusTienda #valor').val().length == 6) { buscar_text_tienda(); }
+  if ($('#frmBusTienda #valor').val().length == 9) { buscar_text_tienda(); }
+}
+
+function bloqueo(e,frm) {
+  var evt = e ? e : event;
+  var key = window.Event ? evt.which : evt.keyCode;
+  if(key == 13) { if(frm=='R'){validar();}else{buscar_text_tienda();}}
+}
+
+function validar_tiendas() {
+  var h = $("#listiendas input");
+  document.getElementById("checkall");
+  for(var b = 0, c = 0;c < h.length;c++) {
+    !0 == h[c].checked && (b += 1)
+  }
+  if(0 >= b) {
+    toastr.error('No hay Tiendas Seleccionadas', 'Error');return (false);
+  }
+  xajax_save_tie(xajax.getFormValues("frmTiendas"),window.top.location.search,$('#can_tie').val());
+}
+
+function sel_chk(){
+  filas = $('#listiendas tr'); 
+  if (document.getElementById('checkall').checked){ chk=true; col='#C4FFFF'; }else{ chk=false; col='';}
+  for (i = 1; i < filas.length; i++){ 
+    $('#chk_tie'+i).prop( "checked", chk );  
+    $('#'+filas[i].id).css('background', col);  
+  }
+}
+
+function pre_eli_tie(cod,tie){ 
+   $("#codelitie").val(cod);
+   $("#codt").val(tie);
+   $("#eliTienda").modal("show");
+}
+
+function eli_tie(){ 
+  xajax_eli_tie($("#codelitie").val(),$("#codt").val(),window.top.location.search); 
+}
+
+function PregEliMat(cod,tipo){
+    if(tipo==='M'){$("#contenido").text("Desea Eliminar el Material");}
+    $("#msndel").modal('show');
+    $("#codeli").val(cod);
+    $("#codtip").val(tipo);
+}
+
+function Eliminar(){ 
+  if($("#codtip").val()=='M'){
+      xajax_eli_mat($("#codeli").val(),window.top.location.search); 
+  }
+}
+
+function lis_obs(cod){
+  $('#divObser').modal('show');
+  xajax_lis_obs(cod);
+  $('#met_cod_uno').attr('value', cod);  
+}
+
+function edi_obs(cod){  
+  $('#regObser').modal('show');
+  $('#regObserva')[0].reset();
+   xajax_dat_obs(cod);
+  $('#met_acc_obs').attr('value', 'editar');
+  $('#met_cod_obs').attr('value', cod);  
+  $('#met_cod_dos').attr('value', $('#met_cod_uno').val());  
+}
+
+function agregar_comentario(){
+  $('#regObser').modal('show');
+  $('#regObserva')[0].reset();
+  $('#met_acc_obs').attr('value', 'insertar');
+  $('#met_cod_dos').attr('value', $('#met_cod_uno').val());  
+}
+
+function lis_fot(cod){
+  $('#divFotos').modal('show');
+  xajax_lis_fot(cod);
+}
+
+function GuardarObservacion(){
+  var cont = $('#obs_des').val().trim();
+  if (cont=='') { toastr.error('Por Favor, Ingresar Observación.', 'Error');document.getElementById('obs_des').focus(); return (false);}
+   xajax_save_obs(xajax.getFormValues('regObserva'),window.top.location.search);
+}
+
+function adj_nue(){ 
+  $('#divArchivo').modal('show');
+  $('#Archivo1')[0].reset(); 
+  $('#adj_acc').attr('value', 'insertar'); 
+  $("#cambio").removeClass("fileinput-exists").addClass("fileinput-new");
+}
+
+function progressHandlingFunction(e){
+    if(e.lengthComputable){
+        //var percentComplete = Math.ceil((e.loaded/e.total)*100);
+        $(".progress-bar").width(((e.loaded/e.total)*100)+'%'); //dynamicaly change the progress bar width
+        $(".sr-only").html(((e.loaded/e.total)*100)+'%'); // show the percentage number
+        $("#pr").val(((e.loaded/e.total)*100));
+    }
+}
+
+function validar_archivo(){ 
+    var nom = $("#nombre1").text();
+    var copia = $("#nomarc1_copia").val();
+    if($('#adj_nom').val()=="") {toastr.error('Por Favor, Ingrese Detalle de Archivo', 'Error'); document.getElementById('adj_nom').focus(); return (false); }
+    if(nom=="") {toastr.error('Por Favor, Ingrese archivo.', 'Error'); document.getElementById('nombre1').focus(); return (false); }
+    var datos = new FormData($("#Archivo1")[0]);
+    if(nom===copia){
+          xajax_save_adj(xajax.getFormValues('Archivo1'),window.top.location.search,nom,copia);
+    }else{
+        var i = 0;
+        $.ajax({
+            url : "upload-file.php",
+            type: "POST",
+            data:datos,
+            contentType:false,
+            dataType: "json",
+            processData:false,
+            cache: false,
+            xhr: function() {  // Custom XMLHttpRequest
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // Check if upload property exists
+                    myXhr.upload.addEventListener('progress',progressHandlingFunction, false); // For handling the progress of the upload
+                }
+                return myXhr;
+            }/*,
+            success:function(data){
+                if(data!==null){
+                    if(data.exito==="1"){
+                        //xajax_save_adj(xajax.getFormValues('regArchivo'),window.top.location.search,nom,copia);
+                       // toastr.success("Archivo(s) subido correctamente", 'Error');
+                    }else if(data.exito==="0"){
+                        toastr.error(data.mensaje, 'Error');
+                    }
+                }else{
+                  toastr.error("RESPUESTA VACIA", 'Error');
+                }
+            }*/,
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                console.log(XMLHttpRequest);
+                console.log(textStatus);
+                console.log(errorThrown);
+            },
+            beforeSend: function(){
+              i++;
+            },              
+            complete: function(XMLHttpRequest, status) { 
+                i--;
+                var obj = jQuery.parseJSON(XMLHttpRequest.responseText);
+                if (i <= 0) {
+                  if(status==="success"){
+                      if(obj.exito ==="1"){
+                            if($("#pr").val()=="100"){
+                                 xajax_save_adj(xajax.getFormValues('Archivo1'),window.top.location.search,nom,copia);
+                            }
+                      }else if(obj.exito==="0"){
+                          toastr.error(obj.mensaje, 'Error');
+                          $(".progress-bar").width('0%'); //dynamicaly change the progress bar width
+                          $(".sr-only").html('0%'); // show the percentage number
+                          $("#pr").val("0");
+                      } 
+                  }
+                }
+            }
+        });
+    }
+}
+
+function eli_adj(cod){ 
+  xajax_eli_adj(cod,window.top.location.search); 
+}
+
+function edi_adj(cod){  
+    $('#divArchivo').modal('show');
+    $('#Archivo1')[0].reset(); 
+    xajax_dat_adj(cod);
+    $("#cambio").removeClass("fileinput-new").addClass("fileinput-exists");
+    $('#adj_acc').attr('value', 'editar'); 
+}
+
+function Remover(){
+    $("#nomarc1").val("");
+}
+
+function Borrar(numero){
+  $("#img"+numero).val("");
+}
+
+function val_mat(){
+  var accion = $("#mat_acc").val();
+  if($('#tip').val()=="0") {toastr.error('Por Favor, Seleccionar Tipo de Material', 'Error'); document.getElementById('tip').focus(); return (false); }
+  if($('#nue_can').val()=="") {toastr.error('Por Favor, Ingresar Cantidad', 'Error'); document.getElementById('nue_can').focus(); return (false); }
+  var i = 0;
+  if(accion==='insertar'){
+      var datos = new FormData($("#regMaterial")[0]);
+      datos.append('accion',"insertar");
+      $.ajax({
+            url : "upload-imagen.php",
+            type: "POST",
+            data:datos,
+            contentType:false,
+            processData:false,
+            dataType :"json",
+            cache: false,
+            xhr: function() { 
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ 
+                    myXhr.upload.addEventListener('progress',progressHandlingFunction, false);
+                }
+                return myXhr;
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+            },
+            beforeSend: function(){
+              i++;
+            },              
+            complete: function(XMLHttpRequest, status) { 
+                i--;
+                var obj = jQuery.parseJSON(XMLHttpRequest.responseText);
+                console.log(obj);
+                if (i <= 0) {
+                  if(status==="success"){
+                      if(obj.exito ==="1"){
+                            if($("#pr").val()=="100"){
+                              console.log(obj.fotos[0]); console.log(obj.fotos[1]);console.log(obj.fotos[2]);console.log(obj.fotos[3]);
+                              xajax_save_mat(xajax.getFormValues('regMaterial'),window.top.location.search,obj.fotos[0],obj.fotos[1],obj.fotos[2],obj.fotos[3],'','','','');
+                            }
+                      }else if(obj.exito==="0"){
+                          toastr.error(obj.mensaje, 'Error');
+                          $(".progress-bar").width('0%');
+                          $(".sr-only").html('0%');
+                          $("#pr").val("0");
+                      } 
+                  }
+                }
+            }
+        });
+  }else if(accion==='editar'){
+        var can = 0;
+        for(var c=1;c<5; c++){
+            if($("#cam"+c).hasClass('fileinput fileinput-exists')){can++;}
+        }
+        if(can<1){toastr.error('Ingresar al Menos una imagen', 'Error'); document.getElementById('nue_can').focus(); return (false);}
+        var datos = new FormData($("#regMaterial")[0]);
+        datos.append('accion',"editar");
+        datos.append('name1',$("#img1").val());
+        datos.append('name2',$("#img2").val());
+        datos.append('name3',$("#img3").val());
+        datos.append('name4',$("#img4").val());
+        datos.append('copia1',$("#img1_copia").val());
+        datos.append('copia2',$("#img2_copia").val());
+        datos.append('copia3',$("#img3_copia").val());
+        datos.append('copia4',$("#img4_copia").val());
+        $.ajax({
+            url : "upload-imagen.php",
+            type: "POST",
+            data:datos,
+            contentType:false,
+            processData:false,
+            dataType :"json",
+            cache: false,
+            xhr: function() {  // Custom XMLHttpRequest
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // Check if upload property exists
+                    myXhr.upload.addEventListener('progress',progressHandlingFunction, false); // For handling the progress of the upload
+                }
+                return myXhr;
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+            },
+            beforeSend: function(){
+              i++;
+            },              
+            complete: function(XMLHttpRequest, status) { 
+                i--;
+                var obj = jQuery.parseJSON(XMLHttpRequest.responseText);
+                if (i <= 0) {
+                  if(status==="success"){
+                      if(obj.exito ==="1"){
+                            if($("#pr").val()=="100"){
+                              //console.log(obj.fotos[0]); console.log(obj.fotos[1]);console.log(obj.fotos[2]);console.log(obj.fotos[3]);
+                              //console.log(obj.acciones[0]); console.log(obj.acciones[1]);console.log(obj.acciones[2]);console.log(obj.acciones[3]);
+                              xajax_save_mat(xajax.getFormValues('regMaterial'),window.top.location.search,obj.fotos[0],obj.fotos[1],obj.fotos[2],obj.fotos[3],obj.acciones[0],obj.acciones[1],obj.acciones[2],obj.acciones[3]);
+                            }
+                      }else if(obj.exito==="0"){
+                          toastr.error(obj.mensaje, 'Error');
+                          $(".progress-bar").width('0%'); //dynamicaly change the progress bar width
+                          $(".sr-only").html('0%'); // show the percentage number
+                          $("#pr").val("0");
+                      } 
+                  }
+                }
+            }
+        });
+  }
+}
+
+function edi_mat(cod){ 
+    $('#titulo').text('MODIFICAR MATERIAL'); 
+    $('#regMaterial')[0].reset(); 
+    $("#cam1").removeClass("fileinput-exists").addClass("fileinput-new");
+    $("#cam2").removeClass("fileinput-exists").addClass("fileinput-new");
+    $("#cam3").removeClass("fileinput-exists").addClass("fileinput-new");
+    $("#cam4").removeClass("fileinput-exists").addClass("fileinput-new");
+    $('#divMaterial').modal('show'); 
+    xajax_dat_mat(cod);
+    $('#mat_acc').attr('value', 'editar'); 
+}
