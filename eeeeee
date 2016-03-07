@@ -1,0 +1,618 @@
+
+<?php
+  session_start();
+  if(isset($_SESSION['usu'])){
+    include ("logica/log_nuevo_orden.php");
+  }else{header('Location: index.php');}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>GEMA</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta content="" name="description"/>
+<meta content="" name="author"/>
+<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+<link href="assets/global/plugins/uniform/css/uniform.default.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/pages/css/profile-old.css" rel="stylesheet" type="text/css"/>
+<link rel="stylesheet" type="text/css" href="assets/global/plugins/bootstrap-toastr/toastr.min.css"/>
+<link href="assets/global/css/components.css" id="style_components" rel="stylesheet" type="text/css"/>
+<link href="assets/global/css/plugins.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/layout.css" rel="stylesheet" type="text/css"/>
+<link id="style_color" href="assets/admin/layout/css/themes/darkblue.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/custom.css" rel="stylesheet" type="text/css"/>
+<link href="assets/admin/layout/css/themes/light2.css" rel="stylesheet" type="text/css"/>
+<script src="assets/global/plugins/jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="js/ajax/core.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="js/script.js"></script>  
+<script type="text/javascript" src="js/ajax/nuevo_orden.js"></script>  
+<link rel="shortcut icon" href="favicon.ico"/>
+<style type="text/css">
+@media screen and (min-width: 768px){
+  #divProveedor .modal-dialog  {width:800px;}
+}
+#divProveedor .modal-dialog {
+  width:70%;
+}
+@media screen and (min-width: 768px){
+  #divListProductos .modal-dialog  {width:800px;}
+}
+#divListProductos .modal-dialog {
+  width:95%;
+}
+@media screen and (min-width: 768px){
+  #divListProveedor .modal-dialog  {width:800px;}
+}
+#divListProveedor .modal-dialog {
+  width:75%;
+}
+</style> 
+</head>
+<body class="page-quick-sidebar-over-content">
+<?php 
+  $dia=date("l");
+  if ($dia=="Monday") $dia="Lunes";
+  if ($dia=="Tuesday") $dia="Martes";
+  if ($dia=="Wednesday") $dia="Miercoles";
+  if ($dia=="Thursday") $dia="Jueves";
+  if ($dia=="Friday") $dia="Viernes";
+  if ($dia=="Saturday") $dia="Sabado";
+  if ($dia=="Sunday") $dia="Domingo";
+  $dia2=date("d");
+  $mes=date("F");
+  if ($mes=="January") $mes="Enero";
+  if ($mes=="February") $mes="Febrero";
+  if ($mes=="March") $mes="Marzo";
+  if ($mes=="April") $mes="Abril";
+  if ($mes=="May") $mes="Mayo";
+  if ($mes=="June") $mes="Junio";
+  if ($mes=="July") $mes="Julio";
+  if ($mes=="August") $mes="Agosto";
+  if ($mes=="September")$mes="Setiembre";
+  if ($mes=="October") $mes="Octubre";
+  if ($mes=="November") $mes="Noviembre";
+  if ($mes=="December") $mes="Diciembre";
+  $ano=date("Y");
+  $contenido.="<b>&nbsp;Fecha de Orden de Pedido:&nbsp;</b>".utf8_encode($dia)." ".utf8_encode($dia2)." "."de $mes del $ano";
+?>
+<div class="page-container">
+    <div class="page-content">
+      <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box blue">
+              <div class="portlet-title">
+                <div class="caption">
+                  <i class="fa fa-gift"></i><span id="titpag"><?php echo $contenido;?></span>
+                </div>
+              </div>
+              <div class="portlet-body">
+                <form class="form-horizontal" role="form" name="frmInicio" id="frmInicio" method="post" onsubmit="return false;">
+              	   <div class="row">
+              	   <div class="col-xs-12">
+                        <input type="hidden" name="codprv" id="codprv" value="0" />
+                        <div class="form-group">
+                          <div class="col-md-4">
+                          </div>
+                          <label for="inputEmail12" class="col-md-2 control-label" style="text-align:center;">Agregar por Codigo Producto: </label>
+                          <div class="col-md-2">
+                            <div class="input-icon">
+                              <i class="fa fa-money"></i>
+                              <input type="text" class="form-control" placeholder='Ingresar Codigo' name="codbus" id="codbus" onkeydown='' onkeypress="bloqueo(event); tecla(event);" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                            </div>
+                          </div>
+                          <div class="col-md-2">
+                          </div>
+                          <div class="col-md-2">
+                            <div class="input-group input-mini">
+                              <span class="input-group-btn">
+                              <button class="btn green" type="button" name="btnAdd" id="btnAdd" onclick="AddProductos();"> Seleccionar Productos <i class="fa fa-plus"></i></button>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                          <label for="inputEmail12" class="col-md-1 control-label">Proveedor </label>
+                          <div class="col-md-4">
+                              <div class="input-group">
+                                <div class="input-icon">
+                                  <i class="fa fa-street-view"></i>
+                                  <input type="text" class="form-control" name="proveedor" id="proveedor" value="" readonly onkeypress="bloqueo(event);">
+                                </div>
+                                <span class="input-group-btn">
+                                  <button class="btn blue" name="abrepro" id="abrepro" onclick="AddPrv();"><i class="fa fa-search"></i>&nbsp;</button>
+                                </span>
+                              </div>
+                          </div>
+                          <div class="col-md-1">
+                          </div>
+                          <label for="inputEmail12" class="col-md-2 control-label">Fecha Emision: </label>
+                          <div class="col-md-2">
+                            <div id="fec2start" class="input-group input-msmall date date-picker" data-date-format="dd-mm-yyyy">
+                              <input type="text" class="form-control" name='fec_emi' id='fec_emi' value="<?php echo date('d-m-Y'); ?>" readonly>
+                              <span class="input-group-btn">
+                              <button class="btn default" type="button"><i class="fa fa-calendar"></i></button>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="col-md-2">
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="inputEmail12" class="col-md-1 control-label">Direccion </label>
+                          <div class="col-md-4">
+                            <div class="input-icon">
+                              <i class="fa fa-street-view"></i>
+                              <input type="text" class="form-control" name="ruc" id="ruc" readonly>
+                            </div>
+                          </div>
+                          <div class="col-md-1">
+                          </div>
+                          <label for="inputEmail12" class="col-md-2 control-label">Recibe Material: </label>
+                          <div class="col-md-2">
+                                <select class="form-control" name='alm' id='alm'></select>
+                          </div>
+                          <div class="col-md-2"></div>
+                        </div>
+
+
+                        <div class="form-group">
+                          <label for="inputEmail12" class="col-md-1 control-label">Fecha Emision: </label>
+                          <div class="col-md-2">
+                            <div id="fec2start" class="input-group input-msmall date date-picker" data-date-format="dd-mm-yyyy">
+                              <input type="text" class="form-control" name='fec_rec' id='fec_rec' value="<?php echo date('d-m-Y'); ?>" readonly>
+                              <span class="input-group-btn">
+                              <button class="btn default" type="button"><i class="fa fa-calendar"></i></button>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                          </div>
+                          <label for="inputEmail12" class="col-md-2 control-label">Recibe Factura: </label>
+                          <div class="col-md-2">
+                                <select class="form-control" name='alm2' id='alm2'></select>
+                          </div>
+                          <div class="col-md-2"></div>
+                        </div>
+
+
+
+                        <div class="form-group">
+                          <label for="inputEmail12" class="col-md-1 control-label">Tipo Movimiento</label>
+                          <div class="col-md-2">
+                                <select class="form-control" name='mon' id='mon'>
+                                <option value="N">Nacional</option>
+                                <option value="E">Extranjera</option>
+                              </select>
+                          </div>
+                          <div class="col-md-3">
+                          </div>
+                          <label for="inputEmail12" class="col-md-2 control-label">Recibe Factura: </label>
+                          <div class="col-md-2">
+                                <select class="form-control" name='alm2' id='alm2'></select>
+                          </div>
+                          <div class="col-md-2"></div>
+                        </div>
+                        <div class="form-group">
+                          <label for="inputEmail12" class="col-md-1 control-label">Observacion </label>
+                          <div class="col-md-10">
+                            <div class="input-icon">
+                              <i class="fa fa-building"></i>
+                              <input type="text" class="form-control" id="desc" name="desc">
+                            </div>
+                          </div>
+                        </div>
+  				           </div>
+                    <hr>
+                    <hr>
+                    <div class="col-xs-12">
+                        <div id="sample_1_wrapper" class="dataTables_wrapper no-footer">
+                          <div class="table-scrollable">
+                            <table class="table table-striped table-bordered table-hover dataTable no-footer" id="listados" role="grid" aria-describedby="sample_1_info">
+                                <thead>
+                                  <tr role='row' class='heading'>
+                                    <th class='table-checkbox sorting_disabled' rowspan='1' colspan='1' style='width: 3%;text-align:center;'>N&deg;</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 5%;'>CANTIDAD</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 16%;'>PRODUCTO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 8%;'>CATEGORIA</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 10%;'>UNIDAD</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 8%;'>CAPACIDAD</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 8%;'>TIPO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 8%;'>VOLTAJE</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 8%;'>MARCA</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 6%;'>MODELO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 10%;'>PRESENTACION</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 5%;'>P. UNIT.</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 5%;'>SUB TOTAL</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='Email' style='width: 7%;text-align:center;'></th>
+                                  </tr>
+                                    </thead><tbody id="lisitem"></tbody>
+                            </table>
+                          </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <hr>
+                    <div class="col-xs-12">
+                      <div class="form-group">
+                        <label for="inputEmail12" class="col-md-1 control-label">Exonerado </label>
+                        <div class="col-md-2">
+                          <div class="input-icon">
+                            <i class="fa fa-money"></i>
+                            <input type="text" class="form-control" name="exon" id="exon" value="0.00" readonly>
+                          </div>
+                        </div>
+                        <label for="inputEmail12" class="col-md-1 control-label">Sub Total</label>
+                        <div class="col-md-2">
+                          <div class="input-icon">
+                            <i class="fa fa-money"></i>
+                            <input type="text" class="form-control" name="sub" id="sub" value="0.00" readonly>
+                          </div>
+                        </div>
+                        <label for="inputEmail12" class="col-md-1 control-label">IGV</label>
+                        <div class="col-md-2">
+                          <div class="input-icon">
+                            <i class="fa fa-money"></i>
+                            <input type="text" class="form-control" id="igv" name="igv" value="0.00" readonly>
+                          </div>
+                        </div>
+                        <label for="inputEmail12" class="col-md-1 control-label">Total</label>
+                        <div class="col-md-2">
+                          <div class="input-icon">
+                            <i class="fa fa-usd"></i>
+                            <input type="text" class="form-control" name="tot" id="tot" value="0.00" readonly>
+                          </div>
+                        </div>
+                      </div>
+                      <hr>
+                      <div class="form-group">
+                        <div class="col-md-5">
+                        </div>
+                        <div class="col-md-1">
+                            <div class="input-group input-mini">
+                              <span class="input-group-btn">
+                              <button class="btn blue" type="button" name="btnSave" id="btnSave" onclick="validar();"> Guardar <i class="fa fa-save"></i></button>
+                              </span>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="input-group input-mini">
+                              <span class="input-group-btn">
+                              <button class="btn red" type="button" name="btnExit" id="btnExit" onclick="window.close();"> Salir <i class="fa fa-times"></i></button>
+                              </span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+        </div>
+      </div>
+    </div>
+
+      <div id="divListProductos" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Seleccione Un Producto</h4>
+              </div>
+              <div class="modal-body">
+                  <form class="form-inline" role="form" name="frmVerProducto" id="frmVerProducto" method="post" onsubmit="return false;">
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <label style="vertical-align: bottom;">Ver Productos
+                      </label>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" name="fam" id="fam" onChange="buscar_tex_pro();"></select>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" name="uni" id="uni" onChange="buscar_tex_pro();"></select>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" name="cap" id="cap" onChange="buscar_tex_pro();"></select>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" name="tip" id="tip" onChange="buscar_tex_pro();"></select>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" name="vol" id="vol" onChange="buscar_tex_pro();"></select>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control col-xs-12" name="mar" id="mar" onChange="buscar_tex_pro();"></select>
+                    </div>
+
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" style="vertical-align: bottom;" name="campo_pro" id="campo_pro">
+                        <option value="pro_nom">Nombre</option>
+                        <option value="pro_int">Codigo</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-medium">
+                        <input type="text" class="form-control" name="valor_pro" id="valor_pro" size='50' placeholder='Buscar' onkeydown='texconpro();' onkeypress="bloqueoPro(event,'L');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                        <span class="input-group-btn">
+                        <button class="btn blue" type="button" name="btnBuscarProdu" id="btnBuscarProdu" onclick="buscar_tex_pro();">Buscar</button>
+                        </span>
+                      </div>
+                    </div>
+                  <br>
+                  <div class="row">
+                      <div class="col-xs-12">
+                        <div class="portlet-body">
+                          <div id="sample_1_wrapper" class="dataTables_wrapper no-footer">
+                            <div class="table-scrollable">
+                              <table class="table table-striped table-bordered table-hover dataTable no-footer" role="grid" aria-describedby="sample_1_info">
+                                  <thead>
+                                    <tr role='row' class='heading'>
+                                    <th class='table-checkbox sorting_disabled' rowspan='1' colspan='1' aria-label='' style='width: 3%;'>N&deg;</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='CODIGO' style='width: 6%;'>CODIGO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='CATEGORIA' style='width: 13%;'>CATEGORIA</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='PRODUCTO' style='width: 15%;'>PRODUCTO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='UNIDAD' style='width: 10%;'>UNIDAD</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='CAPACIDAD' style='width: 8%;'>CAPACIDAD</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='TIPO' style='width: 10%;'>TIPO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='VOLTAJE' style='width: 8%;'>VOLTAJE</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='MARCA' style='width: 7%;'>MARCA</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='MODELO' style='width: 7%;'>MODELO</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='PRESENTACION' style='width: 7%;'>PRESENTACION</th>
+                                    <th class='sorting_disabled' rowspan='1' colspan='1' aria-label='ACCIONES' style='width: 4%;'>ACCION</th>
+                                    </tr>
+                                      </thead><tbody id="lisprodu"></tbody>
+                              </table>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-12 col-sm-12">
+                                <div class="dataTables_paginate paging_bootstrap_extended" id="pagprodu"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button class="btn red" data-dismiss="modal" aria-hidden="true">Salir</button>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div id="divListProveedor" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Listar Proveedores</h4>
+              </div>
+              <div class="modal-body">
+                  <form class="form-inline" role="form" name="frmVerProv" id="frmVerProv" method="post" onsubmit="return false;">
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <label style="vertical-align: bottom;">Ver Proveedor
+                      </label>
+                    </div>
+                    <div class="form-group" style="vertical-align: bottom;">
+                      <select class="form-control" style="vertical-align: bottom;" name="campo_prv" id="campo_prv">
+                        <option value="prv_raz">Razon Social</option>
+                        <option value="prv_cod_int">Codigo Interno</option>
+                        <option value="prv_ruc">RUC</option>
+                        <option value="prv_con">Contacto</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-medium">
+                        <input type="text" class="form-control" name="valor_prv" id="valor_prv" size='50' placeholder='Buscar' onkeydown='texconprv();' onkeypress="bloqueoP(event,'L');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                        <span class="input-group-btn">
+                        <button class="btn blue" type="button" name="btnBuscarProv" id="btnBuscarProv" onclick="buscar_text_prv();">Buscar</button>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="col-md-12"></div>
+                      <div class="col-md-12"></div>
+                      <div class="col-md-12"></div>
+                      <div class="col-md-12"></div>
+                      <div class="col-md-12"></div>
+                      <div class="col-md-12"></div>
+                    </div>
+                    <div class="form-group">
+                      <div class="input-group input-medium ">
+                        <span class="input-group-btn">
+                        <button class="btn blue" type="button" name="btnBuscarProv" id="btnBuscarProv" onclick="nuevoprv();">Nuevo Proveedor</button>
+                        </span>
+                      </div>
+                    </div>
+                  <br>
+                  <div class="row">
+                    <div class="col-md-12">
+                    <div class="table-scrollable">
+                      <table class="table table-striped table-bordered table-hover dataTable no-footer" id="lisprov" role="grid" aria-describedby="sample_1_info">
+                      </table>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-12 col-sm-12">
+                        <div class="dataTables_paginate paging_bootstrap_extended" id="pagprov">
+                        </div>
+                      </div>
+                    </div>
+
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button class="btn red" data-dismiss="modal" aria-hidden="true">Salir</button>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div id="divProveedor" class="modal fade" role="dialog" aria-labelledby="myModalLabel10" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button><h4 class="modal-title" id="titulo">Registro <?php echo $_SESSION['prvn']; ?></h4></div>
+            <div class="modal-body">
+              <form class="form-horizontal" role="form" name="regProveedor" id="regProveedor" method="post" onsubmit="return false;">
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Nombre o Razon Social</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-institution"></i>
+                      <input type="text" class="form-control" placeholder="Nombre del proveedor" name="nomprv" id="nomprv" value="" maxlength="150" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">RUC / DNI</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-slack"></i>
+                      <input type="text" class="form-control" placeholder="DNI o RUC del proveedor" maxlength="11" name="rucprv" id="rucprv" value="" onkeypress="return acceptNum(event);">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Dirección Fiscal</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-building"></i>
+                      <input type="text" class="form-control" placeholder="Dirección del proveedor" name="dirprv" id="dirprv" value="" maxlength="150" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">Email</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa  fa-envelope-o"></i>
+                      <input type="email" class="form-control" placeholder="Correo Electrónico" maxlength="50" name="emaprv" id="emaprv" value="" onkeypress="bloqueo(event,'R');">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Teléfono</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-phone"></i>
+                      <input type="text" class="form-control" placeholder="Telefono del Proveedor" maxlength="20" name="telprv" id="telprv" value="" onkeypress="return acceptNum(event);">
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">Celular</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-mobile-phone"></i>
+                      <input type="text" class="form-control" placeholder="Celular del proveedor" maxlength="20" name="celprv" id="celprv" value="" onkeypress="return acceptNum(event);">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Contacto</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-user"></i>
+                      <input type="text" class="form-control" placeholder="Nombre del Contacto" name="conprv" id="conprv" maxlength="150" value="" onkeypress="bloqueo(event,'R');" onkeyup="javascript:this.value=this.value.toUpperCase();">
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">Telefono Contacto</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-mobile-phone"></i>
+                      <input type="text" class="form-control" placeholder="Celular del Contacto" maxlength="20" name="celconprv" id="celconprv" value="" onkeypress="return acceptNum(event);">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Cuenta de Ahorros Soles</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-credit-card"></i>
+                      <input type="text" class="form-control" placeholder="Cuenta de Ahorros Soles" name="aho_sol" id="aho_sol" maxlength="40" value="" >
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">Cuenta Corriente Soles</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-credit-card"></i>
+                      <input type="text" class="form-control" placeholder="Cuenta Corriente Soles" maxlength="40" name="cor_sol" id="cor_sol" value="" >
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-2 control-label">Cuenta de Ahorros Dolares</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-credit-card"></i>
+                      <input type="text" class="form-control" placeholder="Cuenta de Ahorros Dolares" name="aho_dol" id="aho_dol" maxlength="40" value="" >
+                    </div>
+                  </div>
+                  <label class="col-md-2 control-label">Cuenta Corriente Dolares</label>
+                  <div class="col-md-4">
+                    <div class="input-icon">
+                      <i class="fa fa-credit-card"></i>
+                      <input type="text" class="form-control" placeholder="Cuenta Corriente Dolares" maxlength="40" name="cor_dol" id="cor_dol" value="" >
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn red" data-dismiss="modal" aria-hidden="true">Cancelar</button>
+              <button class="btn blue" name="btnregPrv" id="btnregPrv" onclick="validar_prv();">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  <a href="javascript:;" class="page-quick-sidebar-toggler"><i class="icon-close"></i></a>
+</div>
+
+<div class="page-footer">
+  <div class="page-footer-inner">
+     2016 &copy; Sisnup - GEMA
+  </div>
+  <div class="scroll-to-top">
+    <i class="icon-arrow-up"></i>
+  </div>
+</div>
+<script src="assets/global/plugins/jquery-migrate.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/jquery.blockui.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/uniform/jquery.uniform.min.js" type="text/javascript"></script>
+<script src="assets/global/plugins/bootstrap-toastr/toastr.min.js"></script>
+<script src="assets/global/scripts/metronic.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/layout.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/quick-sidebar.js" type="text/javascript"></script>
+<script src="assets/admin/layout/scripts/demo.js" type="text/javascript"></script>
+<script src="assets/global/scripts/datatable.js"></script>
+<script type="text/javascript" src="assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
+<script>
+  var iniciarFec = function () {
+      if (jQuery().datepicker) {
+          $('.date-picker').datepicker({
+              rtl: Metronic.isRTL(),
+              orientation: "left",
+              autoclose: true
+          });
+      }
+  }
+  jQuery(document).ready(function(){       
+    Metronic.init(); // init metronic core components
+    Layout.init(); // init current layout
+    QuickSidebar.init(); // init quick sidebar
+    Demo.init(); // init demo feature
+    iniciarFec();
+      toastr.options = { "priority": 'error', "closeButton": true, "debug": false, "positionClass": "toast-bottom-right","onclick": null, "showDuration": "1000", "hideDuration": "1000", "timeOut": "5000", "extendedTimeOut": "1000","showEasing": "swing", "hideEasing": "linear", "showMethod": "fadeIn", "hideMethod": "fadeOut"}
+      toastr.options = { "priority": 'success', "closeButton": true, "debug": false, "positionClass": "toast-bottom-right","onclick": null, "showDuration": "1000", "hideDuration": "1000", "timeOut": "5000", "extendedTimeOut": "1000", "showEasing": "swing", "hideEasing": "linear", "showMethod": "fadeIn", "hideMethod": "fadeOut"}
+  });
+</script>
+</body>
+</html>
