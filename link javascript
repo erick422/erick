@@ -1,1 +1,28 @@
 http://rfsouto.com/2013/02/aprendiendo-jquery-capitulo-8-anadir-y-eliminar-elementos/
+
+
+function delete_item(cod) {
+    var filas = $("#listados tr").length-1;
+    for (i = parseInt(cod)+1; i < filas; i++){
+      var j = i - 1;//anterior
+      $("#cant_"+j).val($('#cant_'+i).val());
+      $("#sub_"+j).val($('#sub_'+i).val());
+      $("#pre_"+j).text($("#pre_"+i).text());
+    }
+    filas--;
+    $("#"+filas).remove();
+    recalcular();
+}
+
+/*function delete_item(cod) {
+    var filas = $("#listados tr").length-1;
+    $("#"+cod).remove();
+    for (i = parseInt(cod)+1; i < filas; i++){
+      var j = i - 1;
+      $("#"+i).attr("id",j);
+      $('#cant_'+i).attr({'name': 'cant_'+j,'id': 'cant_'+j,});
+      $('#sub_'+i).attr({'name': 'sub_'+j,'id': 'sub_'+j,});
+      $("#pre_"+i).attr("id","pre_"+j);
+    }
+    recalcular();
+}*/
