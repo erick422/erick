@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<script src="assets/global/plugins/jquery.min.js" type="text/javascript"></script>
+</head>
+<body>
+	<input type="button" name="click" id="click" value="llenar"/><br>
+	<input type="text" name="dato" id="dato" value=""/>
+
+	<script type="text/Javascript">
+		var miClase = new MiPrimeraClase(1,2);
+		$("#click").on("click",function(){
+			miClase.set("atributo2",$("#dato").val())
+			console.log(miClase.get("atributo2"));
+		});
+    //CLASE PADRE
+    //Constructor
+    function MiPrimeraClase(arg1,arg2){
+        //Atributos de la clase
+        this.atributo1=arg1;
+        this.atributo2=arg2;
+    }
+    //Getters y Setters
+    MiPrimeraClase.prototype.get=function(atributo){
+        switch(atributo)
+        {
+            case "atributo1":
+                return this.atributo1;
+            case "atributo2":
+                return this.atributo2;
+        }
+    };
+    MiPrimeraClase.prototype.set=function(atributo,valor){
+        switch(atributo)
+        {
+            case "atributo1":
+                this.atributo1=valor;
+                break;
+            case "atributo2":
+                this.atributo2=valor;
+                break;
+        }
+    };
+    //Métodos
+    MiPrimeraClase.prototype.metodo1=function(){
+        this.atributo1+=10;
+    };
+	</script>
+<!--http://www.jlabstudio.com/webgl/2012/04/programacion-orientada-a-objetos-en-javascript/
+-->
+</body>
+</html>
